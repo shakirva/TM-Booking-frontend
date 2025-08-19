@@ -145,6 +145,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
 
   // Get bookings for a specific date
   const getBookingsByDate = (date: string) => {
+    if (!Array.isArray(bookings)) return [];
     return bookings.filter(booking => booking.date === date);
   };
 
