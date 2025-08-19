@@ -46,7 +46,7 @@ export default function SettingsPage() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
+  } catch (err: unknown) {
       setMessage(err?.response?.data?.message || 'Update failed.');
     }
     setLoading(false);

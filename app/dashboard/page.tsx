@@ -1,19 +1,15 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { MdOutlineCalendarMonth } from "react-icons/md";
-import { MdOutlinePayments } from "react-icons/md";
-import { MdNotificationsNone } from "react-icons/md";
 import { FaRegUser } from "react-icons/fa6";
-import { FaCircleCheck } from "react-icons/fa6";
-import { IoAlertCircle } from "react-icons/io5";
 import { getDashboardSummary, getRequests } from '../../lib/api';
 import { getToken } from '../../lib/auth';
 
 
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<any>({ total_bookings: 0, total_slots: 0 });
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [upcoming, setUpcoming] = useState<any[]>([]);
+  const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0 });
+  const [bookings, setBookings] = useState<Record<string, unknown>[]>([]);
+  const [upcoming, setUpcoming] = useState<Record<string, unknown>[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -27,7 +23,7 @@ export default function DashboardPage() {
         const now = new Date();
         const upcomingEvents = bookingsData.filter(b => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
         setUpcoming(upcomingEvents);
-      } catch (e) {
+  } catch {
         setBookings([]);
         setUpcoming([]);
       }

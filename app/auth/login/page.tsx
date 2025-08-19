@@ -27,7 +27,7 @@ export default function LoginPage() {
       } else {
         router.push('/booking');
       }
-    } catch (err: any) {
+  } catch {
       setError('Invalid username or password');
       setLoading(false);
     }

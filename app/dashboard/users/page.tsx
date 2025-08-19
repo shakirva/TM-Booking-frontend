@@ -190,13 +190,19 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
 }
 
 
-import { useEffect } from 'react';
 import { getToken } from '../../../lib/auth';
 import axios from 'axios';
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [users, setUsers] = useState<any[]>([]);
+  type User = {
+    id?: string | number;
+    username?: string;
+    name?: string;
+    role?: string;
+    created_at?: string;
+  };
+  const [users, setUsers] = useState<User[]>([]);
 
   const fetchUsers = async () => {
     const token = getToken();
@@ -248,12 +254,12 @@ export default function UsersPage() {
               <tr key={user.id || idx} className="border-t border-[#E5E7EB] hover:bg-gray-50">
                 <td className="py-3 px-4"><input type="checkbox" /></td>
                 <td className="py-3 px-4">
-                  <div className="font-medium text-black">{user.username || user.name}</div>
+                  <div className="font-medium text-black">{(user as User).username || (user as User).name}</div>
                 </td>
                 <td className="py-3 px-4">
-                  <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">{user.role}</span>
+                  <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">{(user as User).role}</span>
                 </td>
-                <td className="py-3 px-4">{user.created_at ? new Date(user.created_at).toLocaleDateString() : '-'}</td>
+                <td className="py-3 px-4">{(user as User).created_at ? new Date((user as User).created_at as string).toLocaleDateString() : '-'}</td>
                 <td className="py-3 px-4 text-xl text-gray-400">⋮</td>
               </tr>
             ))}

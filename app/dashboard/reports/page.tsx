@@ -33,8 +33,8 @@ ChartJS.register(
 );
 
 export default function ReportsPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [bookings, setBookings] = useState<any[]>([]);
+  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  const [bookings, setBookings] = useState<Record<string, unknown>[]>([]);
 
     useEffect(() => {
       const fetchData = async () => {

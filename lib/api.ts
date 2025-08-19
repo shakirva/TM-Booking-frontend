@@ -30,7 +30,7 @@ export const getSlots = async (token: string) => {
   return res.data;
 };
 
-export const createSlot = async (slot: any, token: string) => {
+export const createSlot = async (slot: Record<string, unknown>, token: string) => {
   const res = await axios.post(`${API_URL}/bookings/slots`, slot, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -51,7 +51,7 @@ export const updateRequestStatus = async (id: number, status: string, token: str
   return res.data;
 };
 
-export const createBookingRequest = async (data: any) => {
+export const createBookingRequest = async (data: Record<string, unknown>) => {
   const res = await axios.post(`${API_URL}/bookings/request`, data);
   return res.data;
 };

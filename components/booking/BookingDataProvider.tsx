@@ -114,22 +114,22 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     try {
       const data = await api.getSlots(token);
       setBookings(data);
-    } catch (e) {
+    } catch {
       // handle error
     }
   };
 
   // Create a new booking slot (for staff)
   const createBooking = async (bookingData: any) => {
-    const token = getToken();
-    if (!token) return;
-    await api.createSlot(bookingData, token);
-    fetchBookings();
+  const token = getToken();
+  if (!token) return;
+  await api.createSlot(bookingData as Record<string, unknown>, token);
+  fetchBookings();
   };
 
   // Update booking (implement if needed)
   const updateBooking = async (id: string, updates: Partial<Booking>) => {
-    // Implement API call if backend supports
+  // Implement API call if backend supports
   };
 
   // Delete a booking (implement if needed)
