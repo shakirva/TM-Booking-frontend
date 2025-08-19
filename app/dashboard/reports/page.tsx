@@ -61,11 +61,13 @@ export default function ReportsPage() {
     const bookingsPerMonth = Array(12).fill(0);
     const revenuePerMonth = Array(12).fill(0);
     bookings.forEach(b => {
-      if (b.date) {
+      if (b.date && (typeof b.date === 'string' || typeof b.date === 'number' || b.date instanceof Date)) {
         const d = new Date(b.date);
-        const m = d.getMonth();
-        bookingsPerMonth[m] += 1;
-        if (b.amount) revenuePerMonth[m] += b.amount;
+        if (!isNaN(d.getTime())) {
+          const m = d.getMonth();
+          bookingsPerMonth[m] += 1;
+          if (typeof b.amount === 'number') revenuePerMonth[m] += b.amount;
+        }
       }
     });
 
@@ -146,15 +148,15 @@ export default function ReportsPage() {
       <div className="grid grid-cols-4 gap-6">
         <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
           <div className="text-gray-400 text-sm mb-1">Total Bookings</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary ? summary.total_bookings : '-'}</div>
+          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.total_bookings === 'number' ? summary.total_bookings : '-'}</div>
         </div>
         <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
           <div className="text-gray-400 text-sm mb-1">Total Slots</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary ? summary.total_slots : '-'}</div>
+          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.total_slots === 'number' ? summary.total_slots : '-'}</div>
         </div>
         <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
           <div className="text-gray-400 text-sm mb-1">Pending Bookings</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary ? summary.pending : '-'}</div>
+          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.pending === 'number' ? summary.pending : '-'}</div>
         </div>
         {/* Add more cards for other analytics if backend supports */}
       </div>
@@ -204,12 +206,12 @@ export default function ReportsPage() {
             </thead>
             <tbody className="text-gray-700">
               {recentReports.map((report, idx) => (
-                <tr key={report.id || idx} className="hover:bg-gray-100 cursor-pointer">
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{report.date ? new Date(report.date).toLocaleDateString() : '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{report.details || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{report.slot_id || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{report.name || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{report.amount ? `₹${report.amount}` : '-'}</td>
+                <tr key={typeof report.id === 'string' || typeof report.id === 'number' ? report.id : idx} className="hover:bg-gray-100 cursor-pointer">
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.date === 'string' ? new Date(report.date).toLocaleDateString() : '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.details === 'string' ? report.details : '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.slot_id === 'string' || typeof report.slot_id === 'number' ? report.slot_id : '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.name === 'string' ? report.name : '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.amount === 'number' ? `₹${report.amount}` : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
                       report.status === 'approved'
@@ -218,7 +220,7 @@ export default function ReportsPage() {
                         ? 'bg-yellow-100 text-yellow-700'
                         : 'bg-red-100 text-red-700'
                     }`}>
-                      {report.status}
+                      {typeof report.status === 'string' ? report.status : '-'}
                     </span>
                   </td>
                 </tr>

@@ -14,6 +14,7 @@ export interface Booking {
   brideName?: string;
   address: string;
   occasion: string;
+  utility: string;
   timeSlot: string;
   slotTime: string;
   price: number;
@@ -128,8 +129,10 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
   };
 
   // Update booking (implement if needed)
-  const updateBooking = async (id: string, updates: Partial<Booking>) => {
-  // Implement API call if backend supports
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const updateBooking = async (_id: string, _updates: Partial<Booking>) => {
+    // Not implemented: add API call if backend supports
+    return Promise.resolve();
   };
 
   // Delete a booking (implement if needed)
@@ -182,7 +185,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
       bookings,
       setBookings,
       createBooking,
-      updateBooking,
+      updateBooking: updateBooking ?? (() => {}),
       deleteBooking,
       getBookingsByDate,
       resetForm,

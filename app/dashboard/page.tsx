@@ -7,9 +7,19 @@ import { getToken } from '../../lib/auth';
 
 
 export default function DashboardPage() {
+  type BookingDisplay = {
+    id?: string | number;
+    name?: string;
+    occasion_type?: string;
+    utility_type?: string;
+    payment_mode?: string;
+    customer_count?: number;
+    date?: string;
+  // [key: string]: any; // Removed to satisfy lint rules. Add explicit properties as needed.
+  };
   const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0 });
-  const [bookings, setBookings] = useState<Record<string, unknown>[]>([]);
-  const [upcoming, setUpcoming] = useState<Record<string, unknown>[]>([]);
+  const [bookings, setBookings] = useState<BookingDisplay[]>([]);
+  const [upcoming, setUpcoming] = useState<BookingDisplay[]>([]);
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -21,7 +31,11 @@ export default function DashboardPage() {
         setBookings(bookingsData.slice(-5).reverse()); // show 5 most recent
         // For upcoming events, filter bookings with status 'approved' and date in future
         const now = new Date();
-        const upcomingEvents = bookingsData.filter(b => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
+        type BookingRequest = {
+          status: string;
+          date: string;
+        };
+        const upcomingEvents = bookingsData.filter((b: BookingRequest) => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
         setUpcoming(upcomingEvents);
   } catch {
         setBookings([]);
@@ -43,7 +57,7 @@ export default function DashboardPage() {
                 <MdOutlineCalendarMonth className="h-7 w-7 text-blue-500"/>
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Bookings</div>
-              <div className="text-2xl font-bold text-black">{summary.total_bookings}</div>
+              <div className="text-2xl font-bold text-black">{String(summary.total_bookings ?? 0)}</div>
             </div>
           </div>
         </div>
@@ -55,7 +69,7 @@ export default function DashboardPage() {
                 <FaRegUser className="h-7 w-7 text-green-500" />
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Users</div>
-              <div className="text-2xl font-bold text-black">{summary.total_users}</div>
+              <div className="text-2xl font-bold text-black">{String(summary.total_users ?? 0)}</div>
             </div>
           </div>
         </div>
@@ -67,7 +81,12 @@ export default function DashboardPage() {
                 <FaRegUser className="h-7 w-7 text-purple-500" />
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Customer Count</div>
-              <div className="text-2xl font-bold text-black">{bookings.reduce((acc, b) => acc + (b.customer_count || 0), 0)}</div>
+              <div className="text-2xl font-bold text-black">{
+                bookings.reduce((acc: number, b: Record<string, unknown>) => {
+                  const count = typeof b.customer_count === 'number' ? b.customer_count : Number(b.customer_count) || 0;
+                  return acc + count;
+                }, 0)
+              }</div>
             </div>
           </div>
         </div>
@@ -137,13 +156,13 @@ export default function DashboardPage() {
               </thead>
               <tbody className="text-gray-700">
                 {bookings.map((booking) => (
-                  <tr key={booking.id} className="hover:bg-gray-50">
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.id}</td>
-                    <td className="py-3 px-4 font-medium border-b border-[#E5E7EB]">{booking.name || '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility_type || '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customer_count || '-'}</td>
+                  <tr key={String((booking as BookingDisplay).id)} className="hover:bg-gray-50">
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{String((booking as BookingDisplay).id ?? '')}</td>
+                    <td className="py-3 px-4 font-medium border-b border-[#E5E7EB]">{(booking as BookingDisplay).name ?? '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).utility_type ?? '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof (booking as BookingDisplay).customer_count === 'number' ? (booking as BookingDisplay).customer_count : '-'}</td>
                     <td className="py-3 px-4 text-xl text-gray-400 border-b border-[#E5E7EB]">⋮</td>
                   </tr>
                 ))}
@@ -159,18 +178,19 @@ export default function DashboardPage() {
               <div className="text-gray-400 text-center">No upcoming events</div>
             )}
             {upcoming.map((event) => {
-              const dateObj = new Date(event.date);
-              const month = dateObj.toLocaleString('default', { month: 'short' });
-              const day = dateObj.getDate();
+              const dateValue = (event as BookingDisplay).date ?? null;
+              const dateObj = dateValue ? new Date(dateValue) : null;
+              const month = dateObj ? dateObj.toLocaleString('default', { month: 'short' }) : '-';
+              const day = dateObj ? dateObj.getDate() : '-';
               return (
-                <div key={event.id} className="flex items-center bg-[#F8FAFF] rounded-lg p-4 gap-4">
+                <div key={String((event as BookingDisplay).id)} className="flex items-center bg-[#F8FAFF] rounded-lg p-4 gap-4">
                   <div className="flex flex-col items-center justify-center bg-blue-100 text-blue-700 rounded-lg px-3 py-2 min-w-[48px]">
                     <span className="text-xs font-semibold">{month}</span>
                     <span className="text-lg font-bold leading-none">{day}</span>
                   </div>
                   <div>
-                    <div className="font-medium text-black">{event.occasion_type || 'Event'}</div>
-                    <div className="text-xs text-gray-400 mt-1">{event.utility_type || '-'} | {event.payment_mode || '-'}</div>
+                    <div className="font-medium text-black">{(event as BookingDisplay).occasion_type ?? 'Event'}</div>
+                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).utility_type ?? '-'} | {(event as BookingDisplay).payment_mode ?? '-'}</div>
                   </div>
                 </div>
               );

@@ -51,8 +51,12 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
       setFormData({ name: '', role: 'staff', password: '' });
       onUserAdded();
       setTimeout(() => { setMessage(null); onClose(); }, 1000);
-    } catch (err: any) {
-      setMessage(err?.response?.data?.message || 'Failed to add user.');
+    } catch (err: unknown) {
+      if (err && typeof err === 'object' && 'response' in err && err.response && typeof err.response === 'object' && 'data' in err.response && err.response.data && typeof err.response.data === 'object' && 'message' in err.response.data) {
+        setMessage((err.response.data as { message?: string }).message || 'Failed to add user.');
+      } else {
+        setMessage('Failed to add user.');
+      }
     }
     setLoading(false);
   };
@@ -213,7 +217,7 @@ export default function UsersPage() {
       });
       setUsers(res.data);
     } catch {
-      setUsers([]);
+  setUsers([]); // Removed 'any' from catch block
     }
   };
 

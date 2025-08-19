@@ -47,7 +47,20 @@ export default function SettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
   } catch (err: unknown) {
-      setMessage(err?.response?.data?.message || 'Update failed.');
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response === 'object' &&
+        (err as { response?: { data?: { message?: string } } }).response !== null &&
+        'data' in (err as { response?: { data?: { message?: string } } }).response!
+      ) {
+        setMessage(
+          ((err as { response?: { data?: { message?: string } } }).response!.data?.message) || 'Update failed.'
+        );
+      } else {
+        setMessage('Update failed.');
+      }
     }
     setLoading(false);
   };

@@ -37,10 +37,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center sm:bg-[#F8FAFF] bg-white overflow-hidden">
      
       
-    <div className="bg-white h-screen sm:h-auto flex justify-center items-center shadow-none rounded-2xl px-6 py-8 w-full sm:max-w-xs max-w-full  flex flex-col items-center relative">
+  <div className="bg-white h-screen sm:h-auto flex flex-col items-center justify-center shadow-none rounded-2xl px-6 py-8 w-full sm:max-w-xs max-w-full relative">
          {/* Decorative bubble circles */}
      <div className="absolute block sm:hidden top-12 -left-28 w-48 h-48 bg-blue-100 rounded-full opacity-20 z-10" />
-     <div className="absolute block sm:hidden top-32 -right-28 w-48 h-48 bg-blue-100 rounded-full opacity-20 z-10 flex items-center justify-start">
+  <div className="absolute sm:hidden top-32 -right-28 w-48 h-48 bg-blue-100 rounded-full opacity-20 z-10 flex items-center justify-start">
         <span className="text-[#bfdbfe] text-2xl ms-4 mb-22 rotate-[-13deg]"><IoTicketOutline className="text-[#A6CDFF] text-3xl" /></span>
      </div>
       <div className="absolute block sm:hidden bottom-10 -left-10 w-22 h-22 bg-blue-100 rounded-full opacity-15 z-10" />
