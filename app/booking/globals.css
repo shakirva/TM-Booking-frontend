@@ -1,0 +1,6 @@
+.booked-date, .react-calendar__tile.bg-red-200 {
+  background: #fecaca !important; /* Tailwind red-200 */
+  color: #b91c1c !important;      /* Tailwind red-800 */
+  font-weight: bold;
+  border-radius: 9999px;
+}
