@@ -103,7 +103,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
 
               {/* Phone removed */}
 
-
+                  setUsers([]);
             </div>
           </div>
 

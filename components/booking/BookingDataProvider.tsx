@@ -120,11 +120,11 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
   };
 
   // Create a new booking slot (for staff)
-  const createBooking = async (bookingData: any) => {
-  const token = getToken();
-  if (!token) return;
-  await api.createSlot(bookingData as Record<string, unknown>, token);
-  fetchBookings();
+  const createBooking = async (bookingData: Record<string, unknown>) => {
+    const token = getToken();
+    if (!token) return;
+    await api.createSlot(bookingData, token);
+    fetchBookings();
   };
 
   // Update booking (implement if needed)
