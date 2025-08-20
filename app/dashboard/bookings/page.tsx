@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRequests } from '../../../lib/api';
+import { getRequests, deleteBooking } from '../../../lib/api';
 import { getToken } from '../../../lib/auth';
 
 type Booking = {
@@ -11,7 +11,7 @@ type Booking = {
   occasion_type?: string;
   utility_type?: string;
   payment_mode?: string;
-  customer_count?: number;
+  advance_amount?: string;
   slot_id: number;
   date?: string;
   time?: string;
@@ -26,7 +26,11 @@ export default function BookingsPage() {
       if (!token) return;
       try {
         const data = await getRequests(token);
-        setBookings(data);
+        if (Array.isArray(data)) {
+          setBookings(data);
+        } else {
+          setBookings([]);
+        }
       } catch {
         setBookings([]);
       }
@@ -55,12 +59,12 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium">Utility Type</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
-                <th className="py-3 px-4 font-medium">Customer Count</th>
+                <th className="py-3 px-4 font-medium">Advance Amount</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Actions</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
-              {bookings.map((booking) => (
+              {Array.isArray(bookings) && bookings.map((booking) => (
                 <tr
                   key={booking.id}
                   className="hover:bg-gray-100 cursor-pointer"
@@ -72,7 +76,7 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility_type || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customer_count || '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.advance_amount || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">
                     <button
                       className="text-red-500 hover:text-red-700 font-bold"
@@ -80,10 +84,7 @@ export default function BookingsPage() {
                         e.stopPropagation();
                         const token = getToken();
                         if (!token) return;
-                        await fetch(`http://localhost:4000/api/bookings/requests/${booking.id}`, {
-                          method: 'DELETE',
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
+                        await deleteBooking(String(booking.id), token);
                         setBookings(bookings.filter(b => b.id !== booking.id));
                       }}
                     >Delete</button>

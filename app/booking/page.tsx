@@ -7,7 +7,6 @@ import { useBookingData, Booking } from '../../components/booking/BookingDataPro
 import { createBookingRequest } from '../../lib/api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import BookingCards from '../../components/BookingCards';
 import BookingForm from '../../components/BookingForm';
 import PersonalPaymentForm from '../../components/booking/PersonalPaymentForm';
 
@@ -119,7 +118,8 @@ export default function BookingPage() {
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
       if (isDateBooked(date)) {
-        return 'booked-date';
+        // Use Tailwind red classes for booked dates
+        return 'bg-red-200 text-red-800 font-bold rounded-full';
       } else if (isDateAvailable(date)) {
         return 'available-date';
       }
@@ -244,6 +244,20 @@ export default function BookingPage() {
           phone: customerPhone,
           slot_id: 1, // You may want to map selected slot to backend slot_id
           details: notes,
+          occasion_type: occasion,
+          utility_type: utility,
+          payment_mode: paymentMode,
+          advance_amount: paymentType === 'advance' ? advanceAmount : '',
+          date: date ? date.toISOString().split('T')[0] : '',
+          time: (selectedTab === 'Day Time' ? dayTimeSlots[selectedSlot]?.time : receptionSlots[selectedSlot]?.time) || '',
+          // Add all possible fields for backend compatibility
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_phone2: customerPhone2,
+          groom_name: groomName,
+          bride_name: brideName,
+          address: address,
+          payment_type: paymentType,
         });
         router.push('/booking/confirmation');
       } catch {
@@ -337,8 +351,83 @@ export default function BookingPage() {
                   </div>
                 </div>
 
-                {/* Booking Form - Show by default OR when in edit mode OR when available date is selected */}
-                {(!date || selectedDateBookings.length === 0 || isEditMode) && (
+                {/* Booked Customer Details Section - Show when there are bookings and NOT in edit mode */}
+                {selectedDateBookings.length > 0 && !isEditMode && (
+                  <>
+                    {/* Show booked details for this tab */}
+                    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-semibold text-sm mb-2 text-black">Booked Slots ({selectedTab})</h4>
+                      <ul className="grid grid-cols-1 gap-2">
+                        {selectedDateBookings.filter(b => b.timeSlot === selectedTab).length === 0 ? (
+                          <li className="text-gray-500">No bookings for this tab</li>
+                        ) : (
+                          selectedDateBookings.filter(b => b.timeSlot === selectedTab).map((b, idx) => (
+                            <li key={idx} className="border rounded-lg p-2 bg-white">
+                              <div className="font-semibold text-black">{b.slotTime}</div>
+                              <div className="text-xs text-gray-600">Customer: {b.customerName || '-'}</div>
+                              <div className="text-xs text-gray-600">Phone: {b.customerPhone || '-'}</div>
+                              <div className="text-xs text-gray-600">Occasion: {b.occasion || '-'}</div>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                    {/* Show available slots for this date and tab */}
+                    <div className="mt-4">
+                      <h4 className="font-semibold text-sm mb-2 text-black">Available Slots</h4>
+                      <ul className="grid grid-cols-1 gap-2">
+                        {(() => {
+                          // If 'Day' is booked, no slots are available for any tab
+                          const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM');
+                          if (isDayBooked) {
+                            return <li className="text-gray-500">No slots available</li>;
+                          }
+                          // Reception tab logic
+                          if (selectedTab === 'Reception') {
+                            const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === 'Reception');
+                            const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === 'Reception');
+                            const availableReceptionSlots = timeSlots.filter(slot => {
+                              if (slot.time === '3:00 PM - 6:00 PM') return !isEveningBooked;
+                              if (slot.time === '4:00 PM - 7:00 PM') return !isNightBooked;
+                              return false;
+                            });
+                            if (availableReceptionSlots.length === 0) {
+                              return <li className="text-gray-500">No slots available</li>;
+                            }
+                            return availableReceptionSlots.map((slot, idx) => (
+                              <li key={idx} className="text-green-700 font-medium">{slot.label} ({slot.time})</li>
+                            ));
+                          }
+                          // Day Time tab logic (only one slot, so just check if it's booked)
+                          const isDayTimeBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === 'Day Time');
+                          if (isDayTimeBooked) {
+                            return <li className="text-gray-500">No slots available</li>;
+                          }
+                          return timeSlots.filter(slot => slot.time === '9:00 AM - 6:00 PM').map((slot, idx) => (
+                            <li key={idx} className="text-green-700 font-medium">{slot.label} ({slot.time})</li>
+                          ));
+                        })()}
+                      </ul>
+                    </div>
+                  </>
+                )}
+
+                {/* Booking Form - Show by default OR when in edit mode OR when available date is selected and there are available slots */}
+                {((!date || selectedDateBookings.length === 0 || isEditMode) || (selectedDateBookings.length > 0 && !isEditMode && (() => {
+                  // If 'Day' is booked, no slots are available
+                  const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === selectedTab);
+                  if (isDayBooked) return false;
+                  // If 'Evening' or 'Night' is booked, only 'Day' and unbooked slots are available
+                  const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === selectedTab);
+                  const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === selectedTab);
+                  return timeSlots.filter(slot => {
+                    if (isEveningBooked || isNightBooked) {
+                      if (slot.time === '9:00 AM - 6:00 PM') return true;
+                      return !selectedDateBookings.some(b => b.slotTime === slot.time && b.timeSlot === selectedTab);
+                    }
+                    return !selectedDateBookings.some(b => b.slotTime === slot.time && b.timeSlot === selectedTab);
+                  }).length > 0;
+                })())) && (
                   <BookingForm
                     selectedTab={selectedTab}
                     setSelectedTab={setSelectedTab}
@@ -354,18 +443,18 @@ export default function BookingPage() {
                     date={date}
                     isEditMode={isEditMode}
                     editingBooking={editingBooking}
-                  />
-                )}
-
-                {/* Booked Customer Details Section - Show when there are bookings and NOT in edit mode */}
-                {selectedDateBookings.length > 0 && !isEditMode && (
-                  <BookingCards 
-                    date={date}
-                    bookings={selectedDateBookings}
-                    onEditBooking={(booking) => {
-                      setEditingBooking(booking as Booking);
-                      setIsEditMode(true);
-                    }}
+                    bookedTimes={(() => {
+                      // If 'Day' is booked, all slots are booked
+                      const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === selectedTab);
+                      if (isDayBooked) return timeSlots.map(s => s.time);
+                      // If 'Evening' or 'Night' is booked, only 'Day' and unbooked slots are available
+                      const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === selectedTab);
+                      const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === selectedTab);
+                      if (isEveningBooked || isNightBooked) {
+                        return timeSlots.filter(slot => slot.time !== '9:00 AM - 6:00 PM').map(s => s.time).filter(time => selectedDateBookings.some(b => b.slotTime === time && b.timeSlot === selectedTab));
+                      }
+                      return selectedDateBookings.filter(b => b.timeSlot === selectedTab).map(b => b.slotTime);
+                    })()}
                   />
                 )}
               </section>

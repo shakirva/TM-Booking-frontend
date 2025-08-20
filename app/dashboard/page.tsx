@@ -10,12 +10,15 @@ export default function DashboardPage() {
   type BookingDisplay = {
     id?: string | number;
     name?: string;
+    customerName?: string;
     occasion_type?: string;
+    occasion?: string;
     utility_type?: string;
+    utility?: string;
     payment_mode?: string;
-    customer_count?: number;
+    paymentMode?: string;
+    advance_amount?: string;
     date?: string;
-  // [key: string]: any; // Removed to satisfy lint rules. Add explicit properties as needed.
   };
   const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0 });
   const [bookings, setBookings] = useState<BookingDisplay[]>([]);
@@ -28,16 +31,25 @@ export default function DashboardPage() {
         const summaryData = await getDashboardSummary(token);
         setSummary(summaryData);
         const bookingsData = await getRequests(token);
-        setBookings(bookingsData.slice(-5).reverse()); // show 5 most recent
+        // Map camelCase fields to snake_case for dashboard display
+        const mappedBookings = bookingsData.map((b: BookingDisplay) => ({
+          ...b,
+          occasion_type: b.occasion_type ?? b.occasion ?? '-',
+          utility_type: b.utility_type ?? b.utility ?? '-',
+          payment_mode: b.payment_mode ?? b.paymentMode ?? '-',
+          name: b.name ?? b.customerName ?? '-',
+          advance_amount: b.advance_amount ?? '-',
+        }));
+        setBookings(mappedBookings.slice(-5).reverse()); // show 5 most recent
         // For upcoming events, filter bookings with status 'approved' and date in future
         const now = new Date();
         type BookingRequest = {
           status: string;
           date: string;
         };
-        const upcomingEvents = bookingsData.filter((b: BookingRequest) => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
+        const upcomingEvents = mappedBookings.filter((b: BookingRequest) => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
         setUpcoming(upcomingEvents);
-  } catch {
+      } catch {
         setBookings([]);
         setUpcoming([]);
       }
@@ -48,7 +60,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 gap-6">
         {/* Total Bookings */}
         <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
           <div className="flex items-end justify-between  w-full gap-2">
@@ -70,23 +82,6 @@ export default function DashboardPage() {
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Users</div>
               <div className="text-2xl font-bold text-black">{String(summary.total_users ?? 0)}</div>
-            </div>
-          </div>
-        </div>
-        {/* Customer Count */}
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
-          <div className="flex items-end justify-between w-full gap-2">
-            <div>
-              <span className="bg-purple-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
-                <FaRegUser className="h-7 w-7 text-purple-500" />
-              </span>
-              <div className="text-gray-500 text-base font-medium mb-2">Customer Count</div>
-              <div className="text-2xl font-bold text-black">{
-                bookings.reduce((acc: number, b: Record<string, unknown>) => {
-                  const count = typeof b.customer_count === 'number' ? b.customer_count : Number(b.customer_count) || 0;
-                  return acc + count;
-                }, 0)
-              }</div>
             </div>
           </div>
         </div>
@@ -150,7 +145,8 @@ export default function DashboardPage() {
                   <th className="py-3 px-4 font-medium">Occasion Type</th>
                   <th className="py-3 px-4 font-medium">Utility Type</th>
                   <th className="py-3 px-4 font-medium">Payment Mode</th>
-                  <th className="py-3 px-4 font-medium">Customer Count</th>
+                  <th className="py-3 px-4 font-medium">Advance Amount</th>
+                  <th className="py-3 px-4 font-medium">Booked Date</th>
                   <th className="py-3 px-4 font-medium rounded-tr-xl">Actions</th>
                 </tr>
               </thead>
@@ -162,7 +158,8 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).utility_type ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof (booking as BookingDisplay).customer_count === 'number' ? (booking as BookingDisplay).customer_count : '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? new Date((booking as BookingDisplay).date as string).toLocaleDateString() : '-'}</td>
                     <td className="py-3 px-4 text-xl text-gray-400 border-b border-[#E5E7EB]">⋮</td>
                   </tr>
                 ))}

@@ -108,13 +108,20 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
   const [currentBooking, setCurrentBooking] = useState<BookingFormData | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  // Fetch bookings from backend
+  // Fetch bookings from backend (use booking requests, not slots)
   const fetchBookings = async () => {
     const token = getToken();
     if (!token) return;
     try {
-      const data = await api.getSlots(token);
-      setBookings(data);
+      const data = await api.getRequests(token);
+      // Normalize date to YYYY-MM-DD for all bookings
+      const normalized = Array.isArray(data)
+        ? data.map((b) => ({
+            ...b,
+            date: b.date ? new Date(b.date).toISOString().split('T')[0] : '',
+          }))
+        : [];
+      setBookings(normalized);
     } catch {
       // handle error
     }

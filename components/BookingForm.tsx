@@ -14,9 +14,9 @@ interface BookingFormProps {
   setNotes: (notes: string) => void;
   timeSlots: TimeSlot[];
   date: Date | null;
-  // New props for edit mode
   isEditMode?: boolean;
   editingBooking?: Booking | null;
+  bookedTimes?: string[];
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({
@@ -33,7 +33,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
   timeSlots,
   date,
   isEditMode = false,
-  editingBooking = null
+  editingBooking = null,
+  bookedTimes = []
 }) => {
   // If in edit mode and we have booking data, populate the form
   React.useEffect(() => {
@@ -82,20 +83,24 @@ const BookingForm: React.FC<BookingFormProps> = ({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {timeSlots.map((slot, idx) => (
-              <button
-                type="button"
-                key={slot.label}
-                className={`flex items-center justify-between border rounded-lg px-4 py-3 transition-all ${selectedSlot === idx ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'}`}
-                onClick={() => setSelectedSlot(idx)}
-              >
-                <div className='flex flex-col justify-start items-start'>
-                  <h5 className="font-medium text-base text-black tex-left">{slot.label}</h5>
-                  <span className="text-xs text-gray-400 text-black">{slot.time}</span>
-                </div>
-                <div className="font-semibold text-lg text-gray-700">₹{slot.price.toLocaleString()}</div>
-              </button>
-            ))}
+            {timeSlots.map((slot, idx) => {
+              const isBooked = (bookedTimes || []).includes(slot.time);
+              return (
+                <button
+                  type="button"
+                  key={slot.label}
+                  className={`flex items-center justify-between border rounded-lg px-4 py-3 transition-all ${selectedSlot === idx ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'} ${isBooked ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                  onClick={() => !isBooked && setSelectedSlot(idx)}
+                  disabled={isBooked}
+                >
+                  <div className='flex flex-col justify-start items-start'>
+                    <h5 className="font-medium text-base text-black tex-left">{slot.label}</h5>
+                    <span className="text-xs text-gray-400">{slot.time} {isBooked && <span className="text-red-500 font-bold ml-2">Booked</span>}</span>
+                  </div>
+                  <div className="font-semibold text-lg text-gray-700">₹{slot.price.toLocaleString()}</div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>

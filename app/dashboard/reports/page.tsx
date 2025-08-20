@@ -53,23 +53,25 @@ export default function ReportsPage() {
       fetchData();
     }, []);
 
-    // Dynamic recent reports: show 5 most recent bookings
-    const recentReports = bookings.slice(-5).reverse();
+  // Dynamic recent reports: show 5 most recent bookings
+  const recentReports = Array.isArray(bookings) ? bookings.slice(-5).reverse() : [];
 
     // Dynamic chart data generation
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const bookingsPerMonth = Array(12).fill(0);
     const revenuePerMonth = Array(12).fill(0);
-    bookings.forEach(b => {
-      if (b.date && (typeof b.date === 'string' || typeof b.date === 'number' || b.date instanceof Date)) {
-        const d = new Date(b.date);
-        if (!isNaN(d.getTime())) {
-          const m = d.getMonth();
-          bookingsPerMonth[m] += 1;
-          if (typeof b.amount === 'number') revenuePerMonth[m] += b.amount;
+    if (Array.isArray(bookings)) {
+      bookings.forEach(b => {
+        if (b.date && (typeof b.date === 'string' || typeof b.date === 'number' || b.date instanceof Date)) {
+          const d = new Date(b.date);
+          if (!isNaN(d.getTime())) {
+            const m = d.getMonth();
+            bookingsPerMonth[m] += 1;
+            if (typeof b.amount === 'number') revenuePerMonth[m] += b.amount;
+          }
         }
-      }
-    });
+      });
+    }
 
     const revenueData = {
       labels: months,
