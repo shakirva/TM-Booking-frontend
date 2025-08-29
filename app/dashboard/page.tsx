@@ -2,8 +2,8 @@
 import { useEffect, useState } from 'react';
 import { MdOutlineCalendarMonth } from "react-icons/md";
 import { FaRegUser } from "react-icons/fa6";
-import { getDashboardSummary, getRequests } from '../../lib/api';
-import { getToken } from '../../lib/auth';
+import { getDashboardSummary, getRequests } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 
 export default function DashboardPage() {
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                           const token = getToken();
                           if (!token) return;
                           try {
-                            await import('../../lib/api').then(mod => mod.deleteBooking(String(booking.id), token));
+                            await import('@/lib/api').then(mod => mod.deleteBooking(String(booking.id), token));
                             setBookings(bookings.filter(b => b.id !== booking.id));
                           } catch {
                             alert('Failed to delete booking.');

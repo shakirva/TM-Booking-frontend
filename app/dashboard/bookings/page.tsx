@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getRequests, deleteBooking } from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { getRequests, deleteBooking } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 type Booking = {
   id: number;

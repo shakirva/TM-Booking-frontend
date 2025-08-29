@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { getRequests } from '../../lib/api';
-import { getToken } from '../../lib/auth';
+import { getRequests } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 interface BookingDetails {
   id: string;

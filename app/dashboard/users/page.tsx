@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
-import { getUsers, addUser } from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { getUsers, addUser } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 // Add New User Modal Component
 function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClose: () => void; onUserAdded: () => void }) {
@@ -270,7 +270,7 @@ export default function UsersPage() {
                       const token = getToken();
                       if (!token) return;
                       try {
-                        await import('../../../lib/api').then(mod => mod.deleteUser(String(user.id), token));
+                        await import('@/lib/api').then(mod => mod.deleteUser(String(user.id), token));
                         setUsers(users.filter(u => u.id !== user.id));
                       } catch {
                         alert('Failed to delete user.');

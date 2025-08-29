@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { removeToken } from "../../lib/auth";
+import { removeToken } from "@/lib/auth";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 

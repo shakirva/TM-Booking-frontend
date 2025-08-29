@@ -4,7 +4,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../context/BookingContext';
 import { useBookingData, Booking } from '../../components/booking/BookingDataProvider';
-import { createBookingRequest } from '../../lib/api';
+import { createBookingRequest } from '@/lib/api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';

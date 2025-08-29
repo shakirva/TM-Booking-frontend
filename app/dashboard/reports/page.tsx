@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { getRequests } from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { getRequests } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 import { Bar, Line } from 'react-chartjs-2';
 

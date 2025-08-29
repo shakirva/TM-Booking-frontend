@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
-import { login } from '../../../lib/api';
-import { setToken } from '../../../lib/auth';
+import { login } from '@/lib/api';
+import { setToken } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 import { FaRegUser, FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { FiLock } from "react-icons/fi";

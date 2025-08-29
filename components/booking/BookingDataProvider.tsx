@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from "react";
-import * as api from '../../lib/api';
-import { getToken } from '../../lib/auth';
+import * as api from '@/lib/api';
+import { getToken } from '@/lib/auth';
 
 // Types for the booking system
 export interface Booking {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { updateProfile, changePassword } from '../../../lib/api';
-import { getToken } from '../../../lib/auth';
+import { updateProfile, changePassword } from '@/lib/api';
+import { getToken } from '@/lib/auth';
 import { MdOutlineEdit } from "react-icons/md";
 import Image from 'next/image';
 
