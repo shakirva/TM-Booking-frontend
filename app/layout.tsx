@@ -1,13 +1,8 @@
-import { BookingProvider } from './context/BookingContext';
-import { BookingDataProvider } from '../components/booking/BookingDataProvider';
-import IosInstallBanner from '../components/IosInstallBanner';
-import dynamic from 'next/dynamic';
-const InstallPwaPrompt = dynamic(() => import('../components/InstallPwaPrompt'), { ssr: false });
+
+import ClientRootLayout from '../components/ClientRootLayout';
 import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // iOS install banner moved to client component
-
   return (
     <html lang="en">
       <head>
@@ -16,13 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body>
-  <IosInstallBanner />
-  <InstallPwaPrompt />
-        <BookingProvider>
-          <BookingDataProvider>
-            {children}
-          </BookingDataProvider>
-        </BookingProvider>
+        <ClientRootLayout>{children}</ClientRootLayout>
       </body>
     </html>
   );
