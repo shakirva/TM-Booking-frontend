@@ -9,6 +9,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean).slice(1); // skip 'dashboard'
 
+  // Get profile info from localStorage (set by settings page)
+  const [profileName, setProfileName] = React.useState('John Doe');
+  const [profileImage, setProfileImage] = React.useState('');
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const name = localStorage.getItem('profileName');
+      const image = localStorage.getItem('profileImage');
+      if (name) setProfileName(name);
+      if (image) setProfileImage(image);
+    }
+  }, []);
+
   // Sidebar nav items
   const navItems = [
     { label: 'Dashboard', href: '/dashboard', icon: (
@@ -87,9 +99,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div></div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">👤</span>
+              {profileImage ? (
+                <Image src={profileImage} alt="Profile" width={32} height={32} className="w-8 h-8 rounded-full object-cover" />
+              ) : (
+                <span className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">👤</span>
+              )}
               <div>
-                <div className="font-medium text-black text-sm">John Doe</div>
+                <div className="font-medium text-black text-sm">{profileName}</div>
                 <div className="text-xs text-gray-400">Admin</div>
               </div>
             </div>

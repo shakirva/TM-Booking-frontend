@@ -9,18 +9,18 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';
 import PersonalPaymentForm from '../../components/booking/PersonalPaymentForm';
+import BookingDetailsModal from './BookingDetailsModal';
 
-const receptionSlots = [
-  { label: 'Evening', time: '3:00 PM - 6:00 PM', price: 20000 },
-  { label: 'Night', time: '4:00 PM - 7:00 PM', price: 40000 },
-];
 const dayTimeSlots = [
   { label: 'Day', time: '9:00 AM - 6:00 PM', price: 60000 },
 ];
 
 // Helper function to format date consistently
 const formatDateForComparison = (date: Date) => {
-  return date.toISOString().split('T')[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 type BookingStep = 'slot-selection' | 'personal-payment';
@@ -32,13 +32,9 @@ export default function BookingPage() {
 
   // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>('slot-selection');
-
-  // Slot selection state
-  const validTabs = ['Reception', 'Day Time'] as const;
-  const initialTab = validTabs.includes(booking?.slot?.selectedTab as 'Reception' | 'Day Time') ? booking?.slot?.selectedTab as 'Reception' | 'Day Time' : 'Day Time';
-
-  const [selectedTab, setSelectedTab] = useState<'Reception' | 'Day Time'>(initialTab);
-  const [selectedSlot, setSelectedSlot] = useState(booking?.slot?.selectedSlot ?? 0);
+  const [selectedSlot, setSelectedSlot] = useState(0); // Always full day slot
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [modalBooking, setModalBooking] = useState<Booking | null>(null);
   const [date, setDate] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -74,7 +70,7 @@ export default function BookingPage() {
   const [advanceAmount, setAdvanceAmount] = useState(booking?.payment?.advanceAmount ?? '');
   const [paymentMode, setPaymentMode] = useState<'bank' | 'cash' | 'upi'>(initialPaymentMode);
 
-  const timeSlots = selectedTab === 'Day Time' ? dayTimeSlots : receptionSlots;
+  const timeSlots = dayTimeSlots;
   const today = new Date();
   const slotPrice = booking?.slot?.selectedSlotPrice ?? 0;
   const minAdvance = 10000;
@@ -144,8 +140,22 @@ export default function BookingPage() {
       const dateString = formatDateForComparison(value);
       const bookings = getBookingsByDate(dateString);
       setSelectedDateBookings(bookings);
-      
       // Reset edit mode when date changes
+      setIsEditMode(false);
+      setEditingBooking(null);
+    }
+  };
+
+  // Handle calendar day click for showing booking details
+  const handleCalendarClick = (value: Date) => {
+    const dateString = formatDateForComparison(value);
+    const bookings = getBookingsByDate(dateString);
+    if (bookings.length > 0) {
+      setModalBooking(bookings[0]);
+      setShowDetailsModal(true);
+    } else {
+      setDate(value);
+      setSelectedDateBookings([]);
       setIsEditMode(false);
       setEditingBooking(null);
     }
@@ -155,7 +165,6 @@ export default function BookingPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitError(null);
     if (currentStep === 'slot-selection') {
       // Validate slot selection
       if (!date) {
@@ -166,26 +175,27 @@ export default function BookingPage() {
         alert('Please enter an occasion');
         return;
       }
-
-      // Save slot data to context
-      const selectedSlotData = timeSlots[selectedSlot];
+      // Always use local date string for both display and backend
+      const localDateString = formatDateForComparison(date);
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedTab,
           selectedSlot,
-          selectedSlotLabel: selectedSlotData.label,
-          selectedSlotTime: selectedSlotData.time,
-          selectedSlotPrice: selectedSlotData.price,
-          date: date.toISOString().split('T')[0],
+          selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
+          selectedSlotTime: timeSlots[selectedSlot]?.time || '',
+          selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
+          date: localDateString,
           occasion,
           utility,
           notes,
         },
       }));
-
+      setDate(new Date(date.getFullYear(), date.getMonth(), date.getDate())); // ensure no time offset
       setCurrentStep('personal-payment');
-    } else if (currentStep === 'personal-payment') {
+      return;
+    }
+
+    if (currentStep === 'personal-payment') {
       // Validate personal details
       if (!customerName.trim()) {
         alert('Please enter customer name');
@@ -239,18 +249,19 @@ export default function BookingPage() {
 
       // Send booking request to backend
       try {
+        // Always use local date string for backend
+        const localDateString = date ? formatDateForComparison(date) : '';
         await createBookingRequest({
           name: customerName,
           phone: customerPhone,
-          slot_id: 1, // You may want to map selected slot to backend slot_id
+          slot_id: 1, // Always full day slot
           details: notes,
           occasion_type: occasion,
           utility_type: utility,
           payment_mode: paymentMode,
           advance_amount: paymentType === 'advance' ? advanceAmount : '',
-          date: date ? date.toISOString().split('T')[0] : '',
-          time: (selectedTab === 'Day Time' ? dayTimeSlots[selectedSlot]?.time : receptionSlots[selectedSlot]?.time) || '',
-          // Add all possible fields for backend compatibility
+          date: localDateString,
+          time: dayTimeSlots[selectedSlot]?.time || '',
           customer_name: customerName,
           customer_phone: customerPhone,
           customer_phone2: customerPhone2,
@@ -260,8 +271,26 @@ export default function BookingPage() {
           payment_type: paymentType,
         });
         router.push('/booking/confirmation');
-      } catch {
-        setSubmitError('Failed to submit booking. Please try again.');
+      } catch (err: unknown) {
+        function isAxiosErrorWithMessage(error: unknown): error is { response: { data: { message: string } } } {
+          return (
+            typeof error === 'object' &&
+            error !== null &&
+            'response' in error &&
+            typeof (error as { response?: unknown }).response === 'object' &&
+            (error as { response?: { data?: unknown } }).response !== null &&
+            'data' in (error as { response: { data?: unknown } }).response &&
+            typeof ((error as { response: { data?: unknown } }).response as { data?: unknown }).data === 'object' &&
+            ((error as { response: { data: { message?: unknown } } }).response.data !== null) &&
+            'message' in (error as { response: { data: { message?: unknown } } }).response.data &&
+            typeof ((error as { response: { data: { message?: unknown } } }).response.data as { message?: unknown }).message === 'string'
+          );
+        }
+        if (isAxiosErrorWithMessage(err)) {
+          setSubmitError(err.response.data.message);
+        } else {
+          setSubmitError('Failed to submit booking. Please try again.');
+        }
       }
     }
   };
@@ -312,9 +341,6 @@ export default function BookingPage() {
               {getStepTitle()}
             </h2>
           </div>
-
-
-
           <form className="flex flex-col gap-3" onSubmit={handleNext}>
             {submitError && <div className="text-red-500 text-sm mb-2">{submitError}</div>}
             {/* Step 1: Slot Selection */}
@@ -323,11 +349,11 @@ export default function BookingPage() {
                 <h3 className="font-semibold text-base mb-3 text-black border-b border-gray-200 pb-2">
                   Slot Selection
                 </h3>
-                
                 {/* Calendar Section */}
                 <div className="mb-4">
                   <div className="calendar-container">
                     <Calendar
+                      onClickDay={handleCalendarClick}
                       onChange={handleDateChange}
                       value={date}
                       tileContent={tileContent}
@@ -350,87 +376,17 @@ export default function BookingPage() {
                     </div>
                   </div>
                 </div>
-
                 {/* Booked Customer Details Section - Show when there are bookings and NOT in edit mode */}
                 {selectedDateBookings.length > 0 && !isEditMode && (
-                  <>
-                    {/* Show booked details for this tab */}
-                    <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                      <h4 className="font-semibold text-sm mb-2 text-black">Booked Slots ({selectedTab})</h4>
-                      <ul className="grid grid-cols-1 gap-2">
-                        {selectedDateBookings.filter(b => b.timeSlot === selectedTab).length === 0 ? (
-                          <li className="text-gray-500">No bookings for this tab</li>
-                        ) : (
-                          selectedDateBookings.filter(b => b.timeSlot === selectedTab).map((b, idx) => (
-                            <li key={idx} className="border rounded-lg p-2 bg-white">
-                              <div className="font-semibold text-black">{b.slotTime}</div>
-                              <div className="text-xs text-gray-600">Customer: {b.customerName || '-'}</div>
-                              <div className="text-xs text-gray-600">Phone: {b.customerPhone || '-'}</div>
-                              <div className="text-xs text-gray-600">Occasion: {b.occasion || '-'}</div>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    </div>
-                    {/* Show available slots for this date and tab */}
-                    <div className="mt-4">
-                      <h4 className="font-semibold text-sm mb-2 text-black">Available Slots</h4>
-                      <ul className="grid grid-cols-1 gap-2">
-                        {(() => {
-                          // If 'Day' is booked, no slots are available for any tab
-                          const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM');
-                          if (isDayBooked) {
-                            return <li className="text-gray-500">No slots available</li>;
-                          }
-                          // Reception tab logic
-                          if (selectedTab === 'Reception') {
-                            const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === 'Reception');
-                            const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === 'Reception');
-                            const availableReceptionSlots = timeSlots.filter(slot => {
-                              if (slot.time === '3:00 PM - 6:00 PM') return !isEveningBooked;
-                              if (slot.time === '4:00 PM - 7:00 PM') return !isNightBooked;
-                              return false;
-                            });
-                            if (availableReceptionSlots.length === 0) {
-                              return <li className="text-gray-500">No slots available</li>;
-                            }
-                            return availableReceptionSlots.map((slot, idx) => (
-                              <li key={idx} className="text-green-700 font-medium">{slot.label} ({slot.time})</li>
-                            ));
-                          }
-                          // Day Time tab logic (only one slot, so just check if it's booked)
-                          const isDayTimeBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === 'Day Time');
-                          if (isDayTimeBooked) {
-                            return <li className="text-gray-500">No slots available</li>;
-                          }
-                          return timeSlots.filter(slot => slot.time === '9:00 AM - 6:00 PM').map((slot, idx) => (
-                            <li key={idx} className="text-green-700 font-medium">{slot.label} ({slot.time})</li>
-                          ));
-                        })()}
-                      </ul>
-                    </div>
-                  </>
+                  <></>
                 )}
-
                 {/* Booking Form - Show by default OR when in edit mode OR when available date is selected and there are available slots */}
                 {((!date || selectedDateBookings.length === 0 || isEditMode) || (selectedDateBookings.length > 0 && !isEditMode && (() => {
                   // If 'Day' is booked, no slots are available
-                  const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === selectedTab);
-                  if (isDayBooked) return false;
-                  // If 'Evening' or 'Night' is booked, only 'Day' and unbooked slots are available
-                  const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === selectedTab);
-                  const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === selectedTab);
-                  return timeSlots.filter(slot => {
-                    if (isEveningBooked || isNightBooked) {
-                      if (slot.time === '9:00 AM - 6:00 PM') return true;
-                      return !selectedDateBookings.some(b => b.slotTime === slot.time && b.timeSlot === selectedTab);
-                    }
-                    return !selectedDateBookings.some(b => b.slotTime === slot.time && b.timeSlot === selectedTab);
-                  }).length > 0;
+                  const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM');
+                  return !isDayBooked;
                 })())) && (
                   <BookingForm
-                    selectedTab={selectedTab}
-                    setSelectedTab={setSelectedTab}
                     selectedSlot={selectedSlot}
                     setSelectedSlot={setSelectedSlot}
                     occasion={occasion}
@@ -443,22 +399,18 @@ export default function BookingPage() {
                     date={date}
                     isEditMode={isEditMode}
                     editingBooking={editingBooking}
-                    bookedTimes={(() => {
-                      // If 'Day' is booked, all slots are booked
-                      const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM' && b.timeSlot === selectedTab);
-                      if (isDayBooked) return timeSlots.map(s => s.time);
-                      // If 'Evening' or 'Night' is booked, only 'Day' and unbooked slots are available
-                      const isEveningBooked = selectedDateBookings.some(b => b.slotTime === '3:00 PM - 6:00 PM' && b.timeSlot === selectedTab);
-                      const isNightBooked = selectedDateBookings.some(b => b.slotTime === '4:00 PM - 7:00 PM' && b.timeSlot === selectedTab);
-                      if (isEveningBooked || isNightBooked) {
-                        return timeSlots.filter(slot => slot.time !== '9:00 AM - 6:00 PM').map(s => s.time).filter(time => selectedDateBookings.some(b => b.slotTime === time && b.timeSlot === selectedTab));
-                      }
-                      return selectedDateBookings.filter(b => b.timeSlot === selectedTab).map(b => b.slotTime);
-                    })()}
+                    bookedTimes={selectedDateBookings.map(b => b.slotTime)}
                   />
                 )}
               </section>
             )}
+          {/* Show modal if a booked date is clicked */}
+          {showDetailsModal && modalBooking && (
+            <BookingDetailsModal
+              booking={modalBooking}
+              onClose={() => setShowDetailsModal(false)}
+            />
+          )}
 
             {/* Step 2: Personal & Payment Details Combined */}
             {currentStep === 'personal-payment' && (

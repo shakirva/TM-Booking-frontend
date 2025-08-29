@@ -9,6 +9,15 @@ export default function SettingsPage() {
 
   const [name, setName] = useState('John Doe');
   const [profileImage, setProfileImage] = useState('https://randomuser.me/api/portraits/men/32.jpg');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedName = localStorage.getItem('profileName');
+      const storedImage = localStorage.getItem('profileImage');
+      if (storedName) setName(storedName);
+      if (storedImage) setProfileImage(storedImage);
+    }
+  }, []);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +37,11 @@ export default function SettingsPage() {
     try {
       // Update profile
       await updateProfile({ name, profileImage }, token);
+      // Save to localStorage for dashboard top bar
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('profileName', name);
+        localStorage.setItem('profileImage', profileImage);
+      }
       // Change password if fields are filled
       if (currentPassword && newPassword && newPassword === confirmPassword) {
         await changePassword({ currentPassword, newPassword }, token);

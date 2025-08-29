@@ -1,3 +1,23 @@
+export const deleteUser = async (id: string, token: string) => {
+  const res = await axios.delete(`${API_URL}/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+// User management
+export const getUsers = async (token: string) => {
+  const res = await axios.get(`${API_URL}/users`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+export const addUser = async (data: { username: string; password: string; role: string }, token: string) => {
+  const res = await axios.post(`${API_URL}/users`, data, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';

@@ -1,7 +1,6 @@
-
 "use client";
 import React, { useEffect, useState } from "react";
-import { getDashboardSummary, getRequests } from '../../../lib/api';
+import { getRequests } from '../../../lib/api';
 import { getToken } from '../../../lib/auth';
 
 import { Bar, Line } from 'react-chartjs-2';
@@ -33,7 +32,7 @@ ChartJS.register(
 );
 
 export default function ReportsPage() {
-  const [summary, setSummary] = useState<Record<string, unknown> | null>(null);
+  // Removed unused 'summary' state
   const [bookings, setBookings] = useState<Record<string, unknown>[]>([]);
 
     useEffect(() => {
@@ -41,12 +40,10 @@ export default function ReportsPage() {
         const token = getToken();
         if (!token) return;
         try {
-          const summaryData = await getDashboardSummary(token);
-          setSummary(summaryData);
+          // Removed summary fetching and setting
           const bookingsData = await getRequests(token);
           setBookings(bookingsData);
         } catch {
-          setSummary(null);
           setBookings([]);
         }
       };
@@ -67,7 +64,12 @@ export default function ReportsPage() {
           if (!isNaN(d.getTime())) {
             const m = d.getMonth();
             bookingsPerMonth[m] += 1;
-            if (typeof b.amount === 'number') revenuePerMonth[m] += b.amount;
+            // Use advanced_amount if available, otherwise use amount
+            if (typeof b.advanced_amount === 'number') {
+              revenuePerMonth[m] += b.advanced_amount;
+            } else if (typeof b.amount === 'number') {
+              revenuePerMonth[m] += b.amount;
+            }
           }
         }
       });
@@ -146,32 +148,14 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="font-semibold text-2xl text-gray-800">Reports</div>
-      {/* Summary Cards */}
-      <div className="grid grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
-          <div className="text-gray-400 text-sm mb-1">Total Bookings</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.total_bookings === 'number' ? summary.total_bookings : '-'}</div>
-        </div>
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
-          <div className="text-gray-400 text-sm mb-1">Total Slots</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.total_slots === 'number' ? summary.total_slots : '-'}</div>
-        </div>
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start shadow-sm">
-          <div className="text-gray-400 text-sm mb-1">Pending Bookings</div>
-          <div className="text-2xl font-bold text-black mb-1">{summary && typeof summary.pending === 'number' ? summary.pending : '-'}</div>
-        </div>
-        {/* Add more cards for other analytics if backend supports */}
-      </div>
+      {/* Summary Cards removed as requested */}
       {/* Controls */}
       <div className="flex items-center justify-between">
         <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-[#E5E7EB] rounded-lg text-gray-700 text-sm font-medium">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
           Jan 1, 2024 - Jan 31, 2024
         </button>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14m7-7H5"/></svg>
-          Export
-        </button>
+        {/* Export button removed as requested */}
       </div>
       {/* Charts */}
       <div className="grid grid-cols-2 gap-6">
@@ -203,7 +187,7 @@ export default function ReportsPage() {
                 <th className="py-3 px-4 font-medium">Venue</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Revenue</th>
-                <th className="py-3 px-4 font-medium">Status</th>
+                {/* <th className="py-3 px-4 font-medium">Status</th> */}
               </tr>
             </thead>
             <tbody className="text-gray-700">
@@ -213,18 +197,8 @@ export default function ReportsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.details === 'string' ? report.details : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.slot_id === 'string' || typeof report.slot_id === 'number' ? report.slot_id : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.name === 'string' ? report.name : '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.amount === 'number' ? `₹${report.amount}` : '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      report.status === 'approved'
-                        ? 'bg-green-100 text-green-700'
-                        : report.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {typeof report.status === 'string' ? report.status : '-'}
-                    </span>
-                  </td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{typeof report.advanced_amount === 'number' ? `₹${report.advanced_amount}` : (typeof report.amount === 'number' ? `₹${report.amount}` : '-')}</td>
+                  {/* Status column removed as requested */}
                 </tr>
               ))}
             </tbody>

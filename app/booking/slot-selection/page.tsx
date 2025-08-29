@@ -9,12 +9,8 @@ import 'react-calendar/dist/Calendar.css';
 import BookingCards from '../../../components/BookingCards';
 import BookingForm from '../../../components/BookingForm';
 
-const receptionSlots = [
-  { label: 'Evening', time: '3:00 PM - 6:00 PM', price: 20000 },
-  { label: 'Night', time: '4:00 PM - 7:00 PM', price: 40000 },
-];
-const dayTimeSlots = [
-  { label: 'Day', time: '9:00 AM - 6:00 PM', price: 60000 },
+const fullDaySlots = [
+  { label: 'Full Day', time: '9:00 AM - 11:00 PM', price: 100000 },
 ];
 
 // Only August 5th has booked dates - using centralized data provider
@@ -22,19 +18,19 @@ const dayTimeSlots = [
 
 // Helper function to format date consistently
 const formatDateForComparison = (date: Date) => {
-  return date.toISOString().split('T')[0];
+  // Use local date string to avoid timezone issues
+  // This ensures the date is always in local time, not UTC
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export default function SlotSelectionPage() {
   const { booking, setBooking } = useBooking();
   const { getBookingsByDate, deleteBooking } = useBookingData();
-  // Slot selection state
-  const validTabs = ['Reception', 'Day Time'] as const;
-
-  const initialTab = validTabs.includes(booking?.slot?.selectedTab as 'Reception' | 'Day Time') ? booking?.slot?.selectedTab as 'Reception' | 'Day Time' : 'Day Time';
-
-  const [selectedTab, setSelectedTab] = useState<'Reception' | 'Day Time'>(initialTab);
-  const [selectedSlot, setSelectedSlot] = useState(booking?.slot?.selectedSlot ?? 0);
+  // Only one slot: Full Day
+  const [selectedSlot, setSelectedSlot] = useState(0);
   const [date, setDate] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -54,57 +50,52 @@ export default function SlotSelectionPage() {
 
   const router = useRouter();
 
-  const timeSlots = selectedTab === 'Day Time' ? dayTimeSlots : receptionSlots;
+  const timeSlots = fullDaySlots;
   const today = new Date();
 
-  // Function to check if a date is booked using centralized data
-  const isDateBooked = (date: Date) => {
+  // Get all bookings for a date
+  const getDateBookings = (date: Date) => {
     const dateString = formatDateForComparison(date);
-    const bookings = getBookingsByDate(dateString);
-    
-    // Debug: Log the date comparison
-    if (date.getDate() === 5 && date.getMonth() === 7) { // August 5th
-      console.log('Checking August 5th:', {
-        dateString,
-        bookingsCount: bookings.length,
-        bookings: bookings
-      });
-    }
-    
-    return bookings.length > 0;
+    return getBookingsByDate(dateString);
+  };
+
+  // Check if a slot is booked for a date
+  // Removed unused isSlotBooked function
+
+  // Check if the full day is booked for a date
+  const isDateFullyBooked = (date: Date) => {
+    const bookings = getDateBookings(date);
+    return bookings.some(b => b.timeSlot === 'Full Day' || b.slotTime === 'Full Day');
   };
 
   // Function to check if a date is available (not booked and not in the past)
   const isDateAvailable = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    return date >= today && !isDateBooked(date);
+    return date >= today && !isDateFullyBooked(date);
   };
 
   // Custom tile content for calendar
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
-      if (isDateBooked(date)) {
+      if (isDateFullyBooked(date)) {
         return (
-          <div className="w-full h-full flex items-center justify-center">
-          </div>
+          <div className="w-full h-full flex items-center justify-center"></div>
         );
       } else if (isDateAvailable(date)) {
         return (
-          <div className="w-full h-full flex items-center justify-center">
-           
-          </div>
+          <div className="w-full h-full flex items-center justify-center"></div>
         );
       }
     }
     return null;
   };
 
-  // Custom tile className for calendar (red for booked)
+  // Custom tile className for calendar (red for fully booked, yellow for partially booked)
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
-      if (isDateBooked(date)) {
-        return 'bg-red-200 text-red-800 font-bold rounded-full';
+      if (isDateFullyBooked(date)) {
+        return 'booked-date bg-red-200 text-red-800 font-bold rounded-full';
       } else if (isDateAvailable(date)) {
         return 'available-date';
       }
@@ -130,7 +121,7 @@ export default function SlotSelectionPage() {
   const handleDateChange = (value: unknown) => {
     if (value instanceof Date) {
       setDate(value);
-      const dateString = value.toISOString().split('T')[0];
+      const dateString = formatDateForComparison(value);
       const dateBookings = getBookingsByDate(dateString);
       if (dateBookings && dateBookings.length > 0) {
         setSelectedDateBookings(dateBookings);
@@ -149,34 +140,36 @@ export default function SlotSelectionPage() {
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     if (!date) return;
-    
+    // Prevent double booking: if date is already booked and not in edit mode, do not allow booking
+  // Removed unused dateString variable
+    if (!isEditMode && isDateFullyBooked(date)) {
+      alert('This date is already booked. Please select another date or edit/cancel the existing booking.');
+      return;
+    }
     // If in edit mode, save the booking changes first and populate booking context
     if (isEditMode && editingBooking) {
       const updatedBooking = {
         ...editingBooking,
         occasion,
         notes,
-        timeSlot: selectedTab,
+        timeSlot: 'Full Day',
         slotTime: timeSlots[selectedSlot]?.time || editingBooking.slotTime,
         price: timeSlots[selectedSlot]?.price || editingBooking.price
       };
-      
       // Update the booking in the selectedDateBookings array
       const updatedBookings = selectedDateBookings.map(booking => 
         booking.id === updatedBooking.id ? updatedBooking : booking
       );
       setSelectedDateBookings(updatedBookings);
-      
       // Set the booking context with the editing booking's personal data
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedTab,
           selectedSlot,
           selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
           selectedSlotTime: timeSlots[selectedSlot]?.time || '',
           selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
-          date: date.toISOString().split('T')[0],
+          date: formatDateForComparison(date),
           occasion,
           utility,
           notes,
@@ -195,7 +188,6 @@ export default function SlotSelectionPage() {
           paymentMode: editingBooking.paymentMode,
         }
       }));
-      
       setIsEditMode(false);
       setEditingBooking(null);
     } else {
@@ -203,19 +195,17 @@ export default function SlotSelectionPage() {
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedTab,
           selectedSlot,
           selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
           selectedSlotTime: timeSlots[selectedSlot]?.time || '',
           selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
-          date: date.toISOString().split('T')[0],
+          date: formatDateForComparison(date),
           occasion,
           utility,
           notes,
         },
       }));
     }
-    
     router.push('/booking/personal-payment');
   };
 
@@ -273,11 +263,9 @@ export default function SlotSelectionPage() {
                 </div>
               </div>
 
-              {/* Booking Form - Show by default OR when in edit mode OR when available date is selected */}
+              {/* Booking Form - Only one slot: Full Day */}
               {(!date || selectedDateBookings.length === 0 || isEditMode) && (
                 <BookingForm
-                  selectedTab={selectedTab}
-                  setSelectedTab={setSelectedTab}
                   selectedSlot={selectedSlot}
                   setSelectedSlot={setSelectedSlot}
                   occasion={occasion}
@@ -286,7 +274,10 @@ export default function SlotSelectionPage() {
                   setUtility={setUtility}
                   notes={notes}
                   setNotes={setNotes}
-                  timeSlots={timeSlots}
+                  timeSlots={timeSlots.map((slot) => ({
+                    ...slot,
+                    disabled: date ? isDateFullyBooked(date) : false
+                  }))}
                   date={date}
                   isEditMode={isEditMode}
                   editingBooking={editingBooking}
@@ -311,37 +302,56 @@ export default function SlotSelectionPage() {
           {showBookingModal && selectedDateBookings.length > 0 && !isEditMode && (
             <div className="fixed inset-0 flex items-center justify-center z-50">
               <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={() => setShowBookingModal(false)}></div>
-              <div className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full z-50 relative">
+              <div className="bg-white rounded-xl shadow-xl p-6 max-w-2xl w-full z-50 relative">
                 <h3 className="text-lg font-semibold mb-4">Booking Details</h3>
-                {selectedDateBookings.map((booking) => (
-                  <div key={booking.id} className="mb-4 border-b pb-4">
-                    <div className="font-medium">Customer: {booking.customerName}</div>
-                    <div>Phone: {booking.customerPhone}</div>
-                    <div>Occasion: {booking.occasion}</div>
-                    <div>Utility: {booking.utility}</div>
-                    <div>Notes: {booking.notes}</div>
-                    <div>Payment Mode: {booking.paymentMode}</div>
-                    <div>Date: {booking.date}</div>
-                    <div>Time: {booking.slotTime}</div>
-                    <div className="flex gap-2 mt-2">
-                      <button
-                        className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        onClick={() => {
-                          setEditingBooking(booking as Booking);
-                          setIsEditMode(true);
-                          setShowBookingModal(false);
-                        }}
-                      >Edit</button>
-                      <button
-                        className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        onClick={async () => {
-                          await deleteBooking(booking.id);
-                          setShowBookingModal(false);
-                        }}
-                      >Delete</button>
-                    </div>
-                  </div>
-                ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-separate border-spacing-0">
+                    <thead>
+                      <tr className="bg-[#F8FAFF] text-gray-400 text-left">
+                        <th className="py-3 px-4 font-medium">Customer</th>
+                        <th className="py-3 px-4 font-medium">Phone</th>
+                        <th className="py-3 px-4 font-medium">Occasion</th>
+                        <th className="py-3 px-4 font-medium">Utility</th>
+                        <th className="py-3 px-4 font-medium">Notes</th>
+                        <th className="py-3 px-4 font-medium">Payment Mode</th>
+                        <th className="py-3 px-4 font-medium">Date</th>
+                        <th className="py-3 px-4 font-medium">Time</th>
+                        <th className="py-3 px-4 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      {selectedDateBookings.map((booking) => (
+                        <tr key={booking.id}>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customerName}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customerPhone}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.notes}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.paymentMode}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.slotTime}</td>
+                          <td className="py-3 px-4 border-b border-[#E5E7EB] flex gap-2">
+                            <button
+                              className="text-blue-500 hover:text-blue-700 font-bold text-sm border border-blue-100 rounded px-2 py-1"
+                              onClick={() => {
+                                setEditingBooking(booking as Booking);
+                                setIsEditMode(true);
+                                setShowBookingModal(false);
+                              }}
+                            >Edit</button>
+                            <button
+                              className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
+                              onClick={async () => {
+                                await deleteBooking(booking.id);
+                                setShowBookingModal(false);
+                              }}
+                            >Delete</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 <button className="mt-2 px-4 py-2 bg-gray-200 rounded" onClick={() => setShowBookingModal(false)}>Close</button>
               </div>
             </div>

@@ -44,9 +44,8 @@ export default function BookingsPage() {
       <div className="bg-white rounded-xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="font-semibold text-lg text-gray-800">Bookings</div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-gray-50 border border-[#E5E7EB] rounded-lg text-gray-700 hover:bg-gray-100 text-sm font-medium">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 5v14m7-7H5"/></svg>
-            Download
+          <button className="bg-white border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            {/* Download button removed */}
           </button>
         </div>
         <div className="overflow-x-auto">
@@ -59,8 +58,9 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium">Utility Type</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
-                <th className="py-3 px-4 font-medium">Advance Amount</th>
-                <th className="py-3 px-4 font-medium rounded-tr-xl">Actions</th>
+                <th className="py-3 px-4 font-medium rounded-tr-xl">Advance Amount</th>
+                  <th className="py-3 px-4 font-medium">Actions</th>
+                  {/* <th className="py-3 px-4 font-medium"></th> */}
               </tr>
             </thead>
             <tbody className="text-gray-700">
@@ -76,19 +76,19 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility_type || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.advance_amount || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">
-                    <button
-                      className="text-red-500 hover:text-red-700 font-bold"
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        const token = getToken();
-                        if (!token) return;
-                        await deleteBooking(String(booking.id), token);
-                        setBookings(bookings.filter(b => b.id !== booking.id));
-                      }}
-                    >Delete</button>
-                  </td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.advance_amount}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB] flex gap-2">
+                      <button
+                        className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const token = getToken();
+                          if (!token) return;
+                          await deleteBooking(String(booking.id), token);
+                          setBookings(bookings.filter(b => b.id !== booking.id));
+                        }}
+                      >Delete</button>
+                    </td>
                 </tr>
               ))}
             </tbody>

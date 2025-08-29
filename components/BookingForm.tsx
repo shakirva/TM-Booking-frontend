@@ -2,8 +2,6 @@ import React from 'react';
 import { TimeSlot, Booking, occasionTypes, utilityTypes } from './booking/BookingDataProvider';
 
 interface BookingFormProps {
-  selectedTab: 'Reception' | 'Day Time';
-  setSelectedTab: (tab: 'Reception' | 'Day Time') => void;
   selectedSlot: number;
   setSelectedSlot: (slot: number) => void;
   occasion: string;
@@ -17,11 +15,10 @@ interface BookingFormProps {
   isEditMode?: boolean;
   editingBooking?: Booking | null;
   bookedTimes?: string[];
+  // Removed selectedTab and setSelectedTab from props
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({
-  selectedTab,
-  setSelectedTab,
   selectedSlot,
   setSelectedSlot,
   occasion,
@@ -35,22 +32,16 @@ const BookingForm: React.FC<BookingFormProps> = ({
   isEditMode = false,
   editingBooking = null,
   bookedTimes = []
+  // Removed selectedTab and setSelectedTab from destructure
 }) => {
   // If in edit mode and we have booking data, populate the form
   React.useEffect(() => {
     if (isEditMode && editingBooking) {
       setOccasion(editingBooking.occasion);
       setNotes(editingBooking.notes);
-      // Set the correct tab based on the booking's time slot
-      if (editingBooking.timeSlot === 'Day Time') {
-        setSelectedTab('Day Time');
-        setSelectedSlot(0); // Day time slot
-      } else {
-        setSelectedTab('Reception');
-        setSelectedSlot(editingBooking.timeSlot === 'Reception' ? 0 : 1); // Reception slots
-      }
+      setSelectedSlot(0); // Always full day slot
     }
-  }, [isEditMode, editingBooking, setOccasion, setNotes, setSelectedTab, setSelectedSlot]);
+  }, [isEditMode, editingBooking, setOccasion, setNotes, setSelectedSlot]);
 
   // Show form even when no date is selected, but with appropriate messaging
 
@@ -58,22 +49,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
 
   return (
     <>
-      <div className="flex mt-2 mb-2 border-b">
-        <button
-          type="button"
-          className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${selectedTab === 'Day Time' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400'}`}
-          onClick={() => { setSelectedTab('Day Time'); setSelectedSlot(0); }}
-        >
-          Day Time
-        </button>
-        <button
-          type="button"
-          className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${selectedTab === 'Reception' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-400'}`}
-          onClick={() => { setSelectedTab('Reception'); setSelectedSlot(0); }}
-        >
-          Reception
-        </button>
-      </div>
+  {/* No tab selection for full day booking */}
       
       <div className="mb-4">
         <label className="block text-gray-700 mb-1 text-sm font-medium mt-4">Select Time Slot</label>

@@ -1,8 +1,11 @@
 import { BookingProvider } from './context/BookingContext';
 import { BookingDataProvider } from '../components/booking/BookingDataProvider';
+import IosInstallBanner from '../components/IosInstallBanner';
 import './globals.css';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // iOS install banner moved to client component
+
   return (
     <html lang="en">
       <head>
@@ -11,6 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
       <body>
+        <IosInstallBanner />
         <BookingProvider>
           <BookingDataProvider>
             {children}

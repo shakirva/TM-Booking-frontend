@@ -122,8 +122,9 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
           }))
         : [];
       setBookings(normalized);
-    } catch {
-      // handle error
+      console.log('[BookingDataProvider] Bookings fetched:', normalized);
+    } catch (err) {
+      console.error('[BookingDataProvider] Error fetching bookings:', err);
     }
   };
 
@@ -132,7 +133,8 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     const token = getToken();
     if (!token) return;
     await api.createSlot(bookingData, token);
-    fetchBookings();
+    console.log('[BookingDataProvider] Booking created:', bookingData);
+    await fetchBookings();
   };
 
   // Update booking (implement if needed)
@@ -147,7 +149,8 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     const token = getToken();
     if (!token) return;
     await api.deleteBooking(id, token);
-    fetchBookings();
+    console.log('[BookingDataProvider] Booking deleted:', id);
+    await fetchBookings();
   };
 
   // Get bookings for a specific date

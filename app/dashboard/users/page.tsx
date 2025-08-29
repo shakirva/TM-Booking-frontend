@@ -1,8 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import { FaTimes, FaEye, FaEyeSlash } from "react-icons/fa";
-
-
+import { getUsers, addUser } from '../../../lib/api';
+import { getToken } from '../../../lib/auth';
 
 // Add New User Modal Component
 function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClose: () => void; onUserAdded: () => void }) {
@@ -40,13 +40,12 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
     setLoading(true);
     try {
       const token = getToken();
-      await axios.post('http://localhost:4000/api/users', {
+      if (!token) throw new Error('No token');
+      await addUser({
         username: formData.name,
         password: formData.password,
         role: formData.role
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      }, token);
       setMessage('User added successfully.');
       setFormData({ name: '', role: 'staff', password: '' });
       onUserAdded();
@@ -194,8 +193,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
 }
 
 
-import { getToken } from '../../../lib/auth';
-import axios from 'axios';
+// getToken already imported above; axios not needed
 
 export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -212,12 +210,10 @@ export default function UsersPage() {
     const token = getToken();
     if (!token) return;
     try {
-      const res = await axios.get('http://localhost:4000/api/users', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUsers(res.data);
+      const data = await getUsers(token);
+      setUsers(data);
     } catch {
-  setUsers([]); // Removed 'any' from catch block
+      setUsers([]);
     }
   };
 
@@ -264,7 +260,24 @@ export default function UsersPage() {
                   <span className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">{(user as User).role}</span>
                 </td>
                 <td className="py-3 px-4">{(user as User).created_at ? new Date((user as User).created_at as string).toLocaleDateString() : '-'}</td>
-                <td className="py-3 px-4 text-xl text-gray-400">⋮</td>
+                <td className="py-3 px-4 text-xl flex gap-2">
+                  <button
+                    className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!user.id) return;
+                      if (!window.confirm('Are you sure you want to delete this user?')) return;
+                      const token = getToken();
+                      if (!token) return;
+                      try {
+                        await import('../../../lib/api').then(mod => mod.deleteUser(String(user.id), token));
+                        setUsers(users.filter(u => u.id !== user.id));
+                      } catch {
+                        alert('Failed to delete user.');
+                      }
+                    }}
+                  >Delete</button>
+                </td>
               </tr>
             ))}
           </tbody>

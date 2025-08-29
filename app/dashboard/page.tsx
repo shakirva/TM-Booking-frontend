@@ -41,13 +41,12 @@ export default function DashboardPage() {
           advance_amount: b.advance_amount ?? '-',
         }));
         setBookings(mappedBookings.slice(-5).reverse()); // show 5 most recent
-        // For upcoming events, filter bookings with status 'approved' and date in future
+        // For upcoming events, show all bookings with a future date, sorted by nearest date
         const now = new Date();
-        type BookingRequest = {
-          status: string;
-          date: string;
-        };
-        const upcomingEvents = mappedBookings.filter((b: BookingRequest) => b.status === 'approved' && new Date(b.date) > now).slice(0, 3);
+        const upcomingEvents = mappedBookings
+          .filter((b: BookingDisplay) => b.date && new Date(b.date) > now)
+          .sort((a: BookingDisplay, b: BookingDisplay) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
+          .slice(0, 3);
         setUpcoming(upcomingEvents);
       } catch {
         setBookings([]);
@@ -60,7 +59,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-3 gap-6">
         {/* Total Bookings */}
         <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
           <div className="flex items-end justify-between  w-full gap-2">
@@ -82,6 +81,19 @@ export default function DashboardPage() {
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Users</div>
               <div className="text-2xl font-bold text-black">{String(summary.total_users ?? 0)}</div>
+            </div>
+          </div>
+        </div>
+        {/* Total Customers */}
+        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
+          <div className="flex items-end justify-between w-full gap-2">
+            <div>
+              <span className="bg-yellow-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
+                {/* You can use a different icon for customers if you want */}
+                <FaRegUser className="h-7 w-7 text-yellow-500" />
+              </span>
+              <div className="text-gray-500 text-base font-medium mb-2">Total Customers</div>
+              <div className="text-2xl font-bold text-black">{String(summary.total_customers ?? 0)}</div>
             </div>
           </div>
         </div>
@@ -160,7 +172,24 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? new Date((booking as BookingDisplay).date as string).toLocaleDateString() : '-'}</td>
-                    <td className="py-3 px-4 text-xl text-gray-400 border-b border-[#E5E7EB]">⋮</td>
+                    <td className="py-3 px-4 text-xl border-b border-[#E5E7EB] flex gap-2">
+                      <button
+                        className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (!booking.id) return;
+                          if (!window.confirm('Are you sure you want to delete this booking?')) return;
+                          const token = getToken();
+                          if (!token) return;
+                          try {
+                            await import('../../lib/api').then(mod => mod.deleteBooking(String(booking.id), token));
+                            setBookings(bookings.filter(b => b.id !== booking.id));
+                          } catch {
+                            alert('Failed to delete booking.');
+                          }
+                        }}
+                      >Delete</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
