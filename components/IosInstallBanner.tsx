@@ -1,3 +1,22 @@
+
+import React, { useState, useEffect } from "react";
+
+const IosInstallBanner: React.FC = () => {
+  const [showIosBanner, setShowIosBanner] = useState(false);
+
+  useEffect(() => {
+    const isIos = () =>
+      /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isInStandaloneMode = () =>
+      "standalone" in window.navigator &&
+      (window.navigator as Navigator & { standalone?: boolean }).standalone;
+    if (isIos() && !isInStandaloneMode()) {
+      setShowIosBanner(true);
+    }
+  }, []);
+
+  if (!showIosBanner) return null;
+
   return (
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}>
       <div
@@ -46,25 +65,6 @@
             background: "transparent",
             color: "white",
             border: "1px solid white",
-            borderRadius: 4,
-            padding: "4px 12px",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-          onClick={() => setShowIosBanner(false)}
-        >
-          Dismiss
-        </button>
-      </div>
-    </div>
-  );
-        <span style={{ fontWeight: "bold" }}>&apos;Add to Home Screen&apos;</span>
-        <button
-          style={{
-            marginLeft: 16,
-            background: "white",
-            color: "#204DC5",
-            border: "none",
             borderRadius: 4,
             padding: "4px 12px",
             fontWeight: "bold",
