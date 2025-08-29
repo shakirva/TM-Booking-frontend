@@ -1,6 +1,6 @@
 {
   "name": "TM Booking App",
-  "short_name": "Evento",
+  "short_name": "TM booking",
   "description": "A modern booking SaaS PWA.",
   "start_url": "/",
   "display": "standalone",
@@ -9,7 +9,7 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/tm.png",
       "sizes": "192x192",
       "type": "image/png"
     },
