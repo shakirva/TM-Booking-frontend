@@ -38,7 +38,7 @@ const IosInstallBanner: React.FC = () => {
         </span>
         <span>
           Tap <span style={{ fontWeight: "bold" }}>&#x2191;</span> then{' '}
-          <span style={{ fontWeight: "bold" }}>'Add to Home Screen'</span>
+          <span style={{ fontWeight: "bold" }}>&apos;Add to Home Screen&apos;</span>
         </span>
         <button
           style={{
