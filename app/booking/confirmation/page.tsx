@@ -1,9 +1,16 @@
 "use client";
 import React, { useRef } from "react";
+import { useRouter } from 'next/navigation';
 import { useBooking } from "../../context/BookingContext";
 import { FaHome, FaShareAlt } from 'react-icons/fa';
 import Image from 'next/image';
 import html2canvas from "html2canvas";
+// Helper to get array or fallback to single value
+function getSlotArray<T = string>(slot: any, arrKey: string, singleKey: string): T[] {
+  if (Array.isArray(slot?.[arrKey])) return slot[arrKey];
+  if (slot?.[singleKey]) return [slot[singleKey]];
+  return [];
+}
 
 type Personal = {
   customerName?: string;
@@ -17,6 +24,13 @@ export default function BookingConfirmationPage() {
   const slot = booking.slot || {};
   const payment = booking.payment || {};
   const detailsRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Compute time slot label and total price for multi-slot
+  const slotLabels = getSlotArray(slot, 'selectedSlotLabels', 'selectedSlotLabel');
+  const slotPrices = getSlotArray<number>(slot, 'selectedSlotPrices', 'selectedSlotPrice');
+  const timeSlotLabel = slotLabels.length ? slotLabels.join(', ') : '-';
+  const totalAmount = slotPrices.length ? slotPrices.reduce((sum: number, p: number) => sum + (Number(p) || 0), 0) : '-';
 
 
 
@@ -56,6 +70,7 @@ export default function BookingConfirmationPage() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
+  // (Removed duplicate declarations of slotLabels, slotPrices, timeSlotLabel, totalAmount)
         logging: false,
         width: 384, // w-96 = 24rem = 384px
         height: tempDiv.scrollHeight
@@ -114,13 +129,13 @@ export default function BookingConfirmationPage() {
         }
       `}</style>
       <div ref={detailsRef} className="html2canvas-reset bg-white rounded-xl shadow-sm p-6 w-full max-w-md mb-6 flex flex-col items-center">
-        <Image 
-          src="/check.png" 
-          alt="Booking Confirmed" 
-          width={64} 
-          height={64} 
-          className="mb-4"
-        />
+        <div className="mb-4 flex items-center justify-center">
+          <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100">
+            <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </span>
+        </div>
         <h1 className="text-2xl mb-2 text-center text-black">Booking Confirmed!</h1>
         <h2 className="font-semibold text-lg mb-4 text-gray-800">Booking Details</h2>
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -137,11 +152,11 @@ export default function BookingConfirmationPage() {
           <div className="text-gray-600">Date</div>
           <div className="text-black font-medium">{slot.date || '-'}</div>
           <div className="text-gray-600">Time Slot</div>
-          <div className="text-black font-medium">{slot.selectedSlotLabel || '-'}</div>
+          <div className="text-black font-medium">{timeSlotLabel}</div>
           <div className="text-gray-600">Received Amount</div>
           <div className="text-black font-medium">{payment.paymentType === 'advance' ? `₹${payment.advanceAmount || '-'}` : payment.paymentType === 'full' ? 'Full Payment' : '-'}</div>
           <div className="text-gray-600">Total Amount</div>
-          <div className="text-black font-medium">₹{slot.selectedSlotPrice ? slot.selectedSlotPrice.toLocaleString() : '-'}</div>
+          <div className="text-black font-medium">₹{totalAmount ? totalAmount.toLocaleString() : '-'}</div>
         </div>
       </div>
      
@@ -151,8 +166,11 @@ export default function BookingConfirmationPage() {
       >
         <FaShareAlt /> Share Details
       </button>
-      <button className="w-full max-w-md bg-[#204DC5] hover:bg-blue-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 text-base transition">
-        <span className="material-icons text-base"><FaHome /></span> Back to Home
+      <button
+        onClick={() => router.push('/booking')}
+        className="w-full max-w-md bg-[#204DC5] hover:bg-blue-700 text-white font-semibold py-3 rounded-lg flex items-center justify-center gap-2 text-base transition"
+      >
+        <span className="material-icons text-base"><FaHome /></span> New Booking
       </button>
     </div>
   );

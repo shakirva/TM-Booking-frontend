@@ -30,7 +30,7 @@ export default function SlotSelectionPage() {
   const { booking, setBooking } = useBooking();
   const { getBookingsByDate, deleteBooking } = useBookingData();
   // Only one slot: Full Day
-  const [selectedSlot, setSelectedSlot] = useState(0);
+  const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
   const [date, setDate] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -140,35 +140,38 @@ export default function SlotSelectionPage() {
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     if (!date) return;
-    // Prevent double booking: if date is already booked and not in edit mode, do not allow booking
-  // Removed unused dateString variable
-    if (!isEditMode && isDateFullyBooked(date)) {
-      alert('This date is already booked. Please select another date or edit/cancel the existing booking.');
+    if (selectedSlots.length === 0) {
+      alert('Please select at least one slot.');
       return;
     }
-    // If in edit mode, save the booking changes first and populate booking context
+    // Prevent double booking: if any selected slot is already booked, do not allow booking
+    const bookedTimes = selectedDateBookings.map(b => b.slotTime);
+    const conflict = selectedSlots.some(idx => bookedTimes.includes(timeSlots[idx].time));
+    if (conflict && !isEditMode) {
+      alert('One or more selected slots are already booked. Please select available slots.');
+      return;
+    }
+    // If in edit mode, update booking
     if (isEditMode && editingBooking) {
       const updatedBooking = {
         ...editingBooking,
         occasion,
         notes,
-        timeSlot: 'Full Day',
-        slotTime: timeSlots[selectedSlot]?.time || editingBooking.slotTime,
-        price: timeSlots[selectedSlot]?.price || editingBooking.price
+        timeSlots: selectedSlots.map(idx => timeSlots[idx].label),
+        slotTimes: selectedSlots.map(idx => timeSlots[idx].time),
+        price: selectedSlots.reduce((sum, idx) => sum + timeSlots[idx].price, 0)
       };
-      // Update the booking in the selectedDateBookings array
       const updatedBookings = selectedDateBookings.map(booking => 
         booking.id === updatedBooking.id ? updatedBooking : booking
       );
       setSelectedDateBookings(updatedBookings);
-      // Set the booking context with the editing booking's personal data
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedSlot,
-          selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
-          selectedSlotTime: timeSlots[selectedSlot]?.time || '',
-          selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
+          selectedSlots,
+          selectedSlotLabels: selectedSlots.map(idx => timeSlots[idx].label),
+          selectedSlotTimes: selectedSlots.map(idx => timeSlots[idx].time),
+          selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx].price),
           date: formatDateForComparison(date),
           occasion,
           utility,
@@ -191,14 +194,14 @@ export default function SlotSelectionPage() {
       setIsEditMode(false);
       setEditingBooking(null);
     } else {
-      // For new bookings, only set slot data
+      // For new bookings, set all selected slots
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedSlot,
-          selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
-          selectedSlotTime: timeSlots[selectedSlot]?.time || '',
-          selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
+          selectedSlots,
+          selectedSlotLabels: selectedSlots.map(idx => timeSlots[idx].label),
+          selectedSlotTimes: selectedSlots.map(idx => timeSlots[idx].time),
+          selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx].price),
           date: formatDateForComparison(date),
           occasion,
           utility,
@@ -266,8 +269,8 @@ export default function SlotSelectionPage() {
               {/* Booking Form - Only one slot: Full Day */}
               {(!date || selectedDateBookings.length === 0 || isEditMode) && (
                 <BookingForm
-                  selectedSlot={selectedSlot}
-                  setSelectedSlot={setSelectedSlot}
+                  selectedSlots={selectedSlots}
+                  setSelectedSlots={setSelectedSlots}
                   occasion={occasion}
                   setOccasion={setOccasion}
                   utility={utility}
@@ -281,6 +284,7 @@ export default function SlotSelectionPage() {
                   date={date}
                   isEditMode={isEditMode}
                   editingBooking={editingBooking}
+                  bookedTimes={selectedDateBookings.map(b => b.slotTime)}
                 />
               )}
 

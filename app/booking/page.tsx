@@ -1,40 +1,58 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { getToken } from '@/lib/auth';
 import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../context/BookingContext';
 import { useBookingData, Booking } from '../../components/booking/BookingDataProvider';
-import { createBookingRequest } from '@/lib/api';
+import { createBookingRequest, getSlots } from '@/lib/api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';
 import PersonalPaymentForm from '../../components/booking/PersonalPaymentForm';
 import BookingDetailsModal from './BookingDetailsModal';
 
-const dayTimeSlots = [
-  { label: 'Day', time: '9:00 AM - 6:00 PM', price: 60000 },
-];
-
-// Helper function to format date consistently
-const formatDateForComparison = (date: Date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-type BookingStep = 'slot-selection' | 'personal-payment';
-
 export default function BookingPage() {
-  const { booking, setBooking } = useBooking();
-  const { getBookingsByDate } = useBookingData();
   const router = useRouter();
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.replace('/auth/login');
+    }
+  }, [router]);
+  // Fallback slots if backend not available
+  const fallbackTimeSlots = [
+    { id: 1, label: 'Morning', time: '6:00 AM - 12:00 PM', price: 25000 },
+    { id: 2, label: 'Evening', time: '1:00 PM - 8:00 PM', price: 30000 },
+    { id: 3, label: 'Day', time: '9:00 AM - 6:00 PM', price: 60000 },
+  ];
+  interface Slot {
+    id: number;
+    label: string;
+    time: string;
+    price: number;
+  }
+  const [allSlots, setAllSlots] = useState<Slot[]>([]); // All slots from backend
+  const timeSlots: Slot[] = allSlots.length > 0 ? allSlots : fallbackTimeSlots;
+
+  // Helper function to format date as local date (matches backend storage)
+  const formatDateForComparison = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  type BookingStep = 'slot-selection' | 'personal-payment';
+
+  const { booking, setBooking } = useBooking();
+  const { getBookingsByDate, fetchBookings } = useBookingData();
 
   // Step management
   const [currentStep, setCurrentStep] = useState<BookingStep>('slot-selection');
-  const [selectedSlot, setSelectedSlot] = useState(0); // Always full day slot
+  const [selectedSlots, setSelectedSlots] = useState<number[]>([]); // Multi-slot selection
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [modalBooking, setModalBooking] = useState<Booking | null>(null);
+  const [modalBookings, setModalBookings] = useState<Booking[]>([]);
   const [date, setDate] = useState<Date | null>(null);
   const [isClient, setIsClient] = useState(false);
 
@@ -45,6 +63,19 @@ export default function BookingPage() {
       setDate(new Date(booking.slot.date));
     }
   }, [booking?.slot?.date]);
+
+  // Fetch all slots from backend on mount
+  useEffect(() => {
+    async function fetchSlots() {
+      try {
+        const slots = await getSlots('');
+        setAllSlots(slots);
+      } catch {
+        setAllSlots([]);
+      }
+    }
+    fetchSlots();
+  }, []);
 
   const [occasion, setOccasion] = useState(booking?.slot?.occasion ?? '');
   const [utility, setUtility] = useState(booking?.slot?.utility ?? '');
@@ -70,9 +101,9 @@ export default function BookingPage() {
   const [advanceAmount, setAdvanceAmount] = useState(booking?.payment?.advanceAmount ?? '');
   const [paymentMode, setPaymentMode] = useState<'bank' | 'cash' | 'upi'>(initialPaymentMode);
 
-  const timeSlots = dayTimeSlots;
   const today = new Date();
-  const slotPrice = booking?.slot?.selectedSlotPrice ?? 0;
+  // Calculate total slot price dynamically based on selected slots
+  const slotPrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
   const minAdvance = 10000;
 
   // Check if we're in edit mode by looking for existing booking data
@@ -80,8 +111,13 @@ export default function BookingPage() {
 
   // Function to check if a date is booked using centralized data
   const isDateBooked = (date: Date) => {
-    const dateString = formatDateForComparison(date);
+    // Always use local date string (no time offset)
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dateString = formatDateForComparison(localDate);
     const bookings = getBookingsByDate(dateString);
+    if (bookings.length > 0) {
+      console.log('[DEBUG] isDateBooked:', { date, localDate, dateString, bookings });
+    }
     return bookings.length > 0;
   };
 
@@ -113,7 +149,9 @@ export default function BookingPage() {
   // Custom tile className for calendar
   const tileClassName = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
-      if (isDateBooked(date)) {
+      const booked = isDateBooked(date);
+      if (booked) {
+        console.log('[DEBUG] tileClassName: Booked date', date);
         // Use Tailwind red classes for booked dates
         return 'bg-red-200 text-red-800 font-bold rounded-full';
       } else if (isDateAvailable(date)) {
@@ -139,6 +177,8 @@ export default function BookingPage() {
       setDate(value);
       const dateString = formatDateForComparison(value);
       const bookings = getBookingsByDate(dateString);
+      // Debug: log slotTime values for this date
+      console.log('[DEBUG] handleDateChange:', { value, dateString, bookings });
       setSelectedDateBookings(bookings);
       // Reset edit mode when date changes
       setIsEditMode(false);
@@ -151,7 +191,7 @@ export default function BookingPage() {
     const dateString = formatDateForComparison(value);
     const bookings = getBookingsByDate(dateString);
     if (bookings.length > 0) {
-      setModalBooking(bookings[0]);
+      setModalBookings(bookings);
       setShowDetailsModal(true);
     } else {
       setDate(value);
@@ -175,15 +215,19 @@ export default function BookingPage() {
         alert('Please enter an occasion');
         return;
       }
+      if (!selectedSlots.length) {
+        alert('Please select at least one slot');
+        return;
+      }
       // Always use local date string for both display and backend
       const localDateString = formatDateForComparison(date);
       setBooking(prev => ({
         ...prev,
         slot: {
-          selectedSlot,
-          selectedSlotLabel: timeSlots[selectedSlot]?.label || '',
-          selectedSlotTime: timeSlots[selectedSlot]?.time || '',
-          selectedSlotPrice: timeSlots[selectedSlot]?.price || 0,
+          selectedSlots,
+          selectedSlotLabels: selectedSlots.map(idx => timeSlots[idx]?.label || ''),
+          selectedSlotTimes: selectedSlots.map(idx => timeSlots[idx]?.time || ''),
+          selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx]?.price || 0),
           date: localDateString,
           occasion,
           utility,
@@ -251,25 +295,30 @@ export default function BookingPage() {
       try {
         // Always use local date string for backend
         const localDateString = date ? formatDateForComparison(date) : '';
-        await createBookingRequest({
-          name: customerName,
-          phone: customerPhone,
-          slot_id: 1, // Always full day slot
-          details: notes,
-          occasion_type: occasion,
-          utility_type: utility,
-          payment_mode: paymentMode,
-          advance_amount: paymentType === 'advance' ? advanceAmount : '',
-          date: localDateString,
-          time: dayTimeSlots[selectedSlot]?.time || '',
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_phone2: customerPhone2,
-          groom_name: groomName,
-          bride_name: brideName,
-          address: address,
-          payment_type: paymentType,
-        });
+        // For each selected slot, send a booking request with the correct slot_id
+        for (const idx of selectedSlots) {
+          const slot = timeSlots[idx];
+          await createBookingRequest({
+            name: customerName,
+            phone: customerPhone,
+            slot_id: slot.id,
+            details: notes,
+            occasion_type: occasion,
+            utility_type: utility,
+            payment_mode: paymentMode,
+            advance_amount: paymentType === 'advance' ? advanceAmount : '',
+            date: localDateString,
+            time: slot.time,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_phone2: customerPhone2,
+            groom_name: groomName,
+            bride_name: brideName,
+            address: address,
+            payment_type: paymentType,
+          });
+        }
+        await fetchBookings(); // Refresh bookings after successful booking
         router.push('/booking/confirmation');
       } catch (err: unknown) {
         function isAxiosErrorWithMessage(error: unknown): error is { response: { data: { message: string } } } {
@@ -278,7 +327,7 @@ export default function BookingPage() {
             error !== null &&
             'response' in error &&
             typeof (error as { response?: unknown }).response === 'object' &&
-            (error as { response?: { data?: unknown } }).response !== null &&
+            (error as { response: { data?: unknown } }).response !== null &&
             'data' in (error as { response: { data?: unknown } }).response &&
             typeof ((error as { response: { data?: unknown } }).response as { data?: unknown }).data === 'object' &&
             ((error as { response: { data: { message?: unknown } } }).response.data !== null) &&
@@ -312,6 +361,13 @@ export default function BookingPage() {
       default:
         return 'Book Your Slot';
     }
+  };
+
+  // For a given date, get booked slot_ids
+  const getBookedSlotIdsForDate = (date: Date) => {
+    const dateString = formatDateForComparison(date);
+    const bookings = getBookingsByDate(dateString) as Booking[];
+  return bookings.map((b) => (b as any).slot_id);
   };
 
   // Don't render until client-side hydration is complete
@@ -381,14 +437,10 @@ export default function BookingPage() {
                   <></>
                 )}
                 {/* Booking Form - Show by default OR when in edit mode OR when available date is selected and there are available slots */}
-                {((!date || selectedDateBookings.length === 0 || isEditMode) || (selectedDateBookings.length > 0 && !isEditMode && (() => {
-                  // If 'Day' is booked, no slots are available
-                  const isDayBooked = selectedDateBookings.some(b => b.slotTime === '9:00 AM - 6:00 PM');
-                  return !isDayBooked;
-                })())) && (
+                {date && (
                   <BookingForm
-                    selectedSlot={selectedSlot}
-                    setSelectedSlot={setSelectedSlot}
+                    selectedSlots={selectedSlots}
+                    setSelectedSlots={setSelectedSlots}
                     occasion={occasion}
                     setOccasion={setOccasion}
                     utility={utility}
@@ -399,16 +451,48 @@ export default function BookingPage() {
                     date={date}
                     isEditMode={isEditMode}
                     editingBooking={editingBooking}
-                    bookedTimes={selectedDateBookings.map(b => b.slotTime)}
+                    // Mark slots as booked if their slot_id is in bookedSlotIds
+                    bookedTimes={(() => {
+                      const bookedSlotIds = getBookedSlotIdsForDate(date);
+                      return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
+                    })()}
                   />
                 )}
               </section>
             )}
           {/* Show modal if a booked date is clicked */}
-          {showDetailsModal && modalBooking && (
+          {showDetailsModal && modalBookings.length > 0 && (
             <BookingDetailsModal
-              booking={modalBooking}
+              bookings={modalBookings}
               onClose={() => setShowDetailsModal(false)}
+              onEdit={(details) => {
+                // Map BookingDetails to Booking type
+                setEditingBooking({
+                  id: details.id,
+                  date: details.date || '',
+                  customerName: details.name || details.customerName || '',
+                  customerPhone: details.phone || details.customerPhone || '',
+                  customerPhone2: '',
+                  groomName: '',
+                  brideName: '',
+                  address: '',
+                  occasion: details.occasion_type || details.occasion || '',
+                  utility: '',
+                  timeSlot: '',
+                  slotTime: details.time || '',
+                  price: 0,
+                  notes: '',
+                  paymentType: details.payment_mode === 'advance' ? 'advance' : 'full',
+                  advanceAmount: details.advance_amount || details.advanceAmount || '',
+                  paymentMode: (['bank', 'cash', 'upi'].includes((details.payment_mode || details.paymentMode) as string)
+                    ? (details.payment_mode || details.paymentMode)
+                    : 'cash') as 'bank' | 'cash' | 'upi',
+                  createdAt: '',
+                  updatedAt: '',
+                });
+                setIsEditMode(true);
+                setShowDetailsModal(false);
+              }}
             />
           )}
 
@@ -465,4 +549,5 @@ export default function BookingPage() {
       </main>
     </div>
   );
+// ...existing code...
 }

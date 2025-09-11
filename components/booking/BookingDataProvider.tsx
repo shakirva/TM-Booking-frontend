@@ -34,8 +34,8 @@ export interface TimeSlot {
 
 export interface BookingFormData {
   // Slot Selection
-  selectedTab: 'Reception' | 'Day Time';
-  selectedSlot: number;
+    selectedTab: 'Reception' | 'Day Time';
+    selectedSlots: number[];
   occasion: string;
   utility: string;
   notes: string;
@@ -44,8 +44,8 @@ export interface BookingFormData {
   customerName: string;
   customerPhone: string;
   customerPhone2: string;
-  groomName?: string;
-  brideName?: string;
+    groomName?: string;
+    brideName?: string;
   address: string;
   
   // Payment Details
@@ -83,21 +83,15 @@ export const utilityTypes = [
 
 // Context type
 type BookingDataContextType = {
-  // Current booking being created/edited
   currentBooking: BookingFormData | null;
   setCurrentBooking: Dispatch<SetStateAction<BookingFormData | null>>;
-  
-  // All bookings data
   bookings: Booking[];
   setBookings: Dispatch<SetStateAction<Booking[]>>;
-  
-  // Booking operations
   createBooking: (booking: Omit<Booking, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateBooking: (id: string, updates: Partial<Booking>) => void;
   deleteBooking: (id: string) => void;
   getBookingsByDate: (date: string) => Booking[];
-  
-  // Form data helpers
+  fetchBookings: () => Promise<void>; // Expose fetchBookings
   resetForm: () => void;
   populateFormFromBooking: (booking: Booking) => void;
 };
@@ -114,11 +108,11 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     try {
       const data = await api.getRequests(token);
-      // Normalize date to YYYY-MM-DD for all bookings
+      // Use 'date' from backend as the booking date for frontend logic
       const normalized = Array.isArray(data)
         ? data.map((b) => ({
             ...b,
-            date: b.date ? new Date(b.date).toISOString().split('T')[0] : '',
+            date: b.date ? String(b.date).slice(0, 10) : '',
           }))
         : [];
       setBookings(normalized);
@@ -171,11 +165,13 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
 
   // Populate form from existing booking
   const populateFormFromBooking = (booking: Booking) => {
+    // Support multi-slot: booking.slotTime can be a comma-separated string of slot times
+    const slotTimes = booking.slotTime ? booking.slotTime.split(',').map(s => s.trim()) : [];
     setCurrentBooking({
-      selectedTab: booking.timeSlot as 'Reception' | 'Day Time',
-      selectedSlot: 0, // Will be calculated based on timeSlot
+      selectedTab: 'Reception', // or 'Day Time' if you want to infer from booking
+      selectedSlots: slotTimes.length > 0 ? slotTimes.map(label => timeSlots.findIndex(ts => ts.time === label)).filter(idx => idx !== -1) : [],
       occasion: booking.occasion,
-      utility: 'Basic Setup', // Default value
+      utility: booking.utility || 'Basic Setup',
       notes: booking.notes,
       customerName: booking.customerName,
       customerPhone: booking.customerPhone,
@@ -199,6 +195,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
       updateBooking: updateBooking ?? (() => {}),
       deleteBooking,
       getBookingsByDate,
+      fetchBookings, // Expose fetchBookings
       resetForm,
       populateFormFromBooking
     }}>

@@ -300,7 +300,7 @@ export default function BookingDetailPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount Paid</span>
-                <span className="text-blue-600 font-medium text-black">₹{booking.payment.amountPaid.toLocaleString()}</span>
+                <span className="text-blue-600 font-medium">₹{booking.payment.amountPaid.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Balance</span>
@@ -321,7 +321,7 @@ export default function BookingDetailPage() {
                       <div className="text-sm text-gray-600">{payment.description}</div>
                       <div className="text-xs text-gray-500">{payment.date}</div>
                     </div>
-                    <span className="text-blue-600 text-sm font-medium text-black">{payment.status}</span>
+                    <span className="text-blue-600 text-sm font-medium">{payment.status}</span>
                   </div>
                 </div>
               ))}

@@ -2,8 +2,8 @@ import React from 'react';
 import { TimeSlot, Booking, occasionTypes, utilityTypes } from './booking/BookingDataProvider';
 
 interface BookingFormProps {
-  selectedSlot: number;
-  setSelectedSlot: (slot: number) => void;
+  selectedSlots: number[];
+  setSelectedSlots: (slots: number[]) => void;
   occasion: string;
   setOccasion: (occasion: string) => void;
   utility: string;
@@ -19,8 +19,8 @@ interface BookingFormProps {
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({
-  selectedSlot,
-  setSelectedSlot,
+  selectedSlots,
+  setSelectedSlots,
   occasion,
   setOccasion,
   utility,
@@ -39,9 +39,9 @@ const BookingForm: React.FC<BookingFormProps> = ({
     if (isEditMode && editingBooking) {
       setOccasion(editingBooking.occasion);
       setNotes(editingBooking.notes);
-      setSelectedSlot(0); // Always full day slot
+      setSelectedSlots([0]); // Always full day slot
     }
-  }, [isEditMode, editingBooking, setOccasion, setNotes, setSelectedSlot]);
+  }, [isEditMode, editingBooking, setOccasion, setNotes, setSelectedSlots]);
 
   // Show form even when no date is selected, but with appropriate messaging
 
@@ -52,28 +52,37 @@ const BookingForm: React.FC<BookingFormProps> = ({
   {/* No tab selection for full day booking */}
       
       <div className="mb-4">
-        <label className="block text-gray-700 mb-1 text-sm font-medium mt-4">Select Time Slot</label>
+        <label className="block text-gray-700 mb-1 text-sm font-medium mt-4">Select Time Slot(s)</label>
         {!date ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-sm">Please select a date from the calendar above to choose your time slot</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {timeSlots.map((slot, idx) => {
               const isBooked = (bookedTimes || []).includes(slot.time);
+              const isSelected = selectedSlots.includes(idx);
               return (
                 <button
-                  type="button"
                   key={slot.label}
-                  className={`flex items-center justify-between border rounded-lg px-4 py-3 transition-all ${selectedSlot === idx ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'} ${isBooked ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
-                  onClick={() => !isBooked && setSelectedSlot(idx)}
+                  type="button"
                   disabled={isBooked}
+                  onClick={() => {
+                    if (isBooked) return;
+                    if (isSelected) {
+                      setSelectedSlots(selectedSlots.filter(i => i !== idx));
+                    } else {
+                      setSelectedSlots([...selectedSlots, idx]);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors
+                    ${isBooked ? 'bg-red-100 text-red-500 border-red-400 cursor-not-allowed' : isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-gray-300 hover:bg-blue-50'}`}
                 >
-                  <div className='flex flex-col justify-start items-start'>
-                    <h5 className="font-medium text-base text-black tex-left">{slot.label}</h5>
-                    <span className="text-xs text-gray-400">{slot.time} {isBooked && <span className="text-red-500 font-bold ml-2">Booked</span>}</span>
-                  </div>
-                  <div className="font-semibold text-lg text-gray-700">₹{slot.price.toLocaleString()}</div>
+                  <span>{slot.label} <span className="text-xs text-gray-500">({slot.time})</span></span>
+                  <span className="text-sm font-semibold">₹{slot.price.toLocaleString()}</span>
+                  {isBooked && <span className="ml-2 text-xs text-red-500 font-bold">Booked</span>}
+                  {isSelected && !isBooked && <span className="ml-2 text-xs text-green-200">Selected</span>}
+                  {isSelected && isBooked && <span className="ml-2 text-xs text-red-600 font-bold">Selected</span>}
                 </button>
               );
             })}

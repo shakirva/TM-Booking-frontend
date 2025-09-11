@@ -1,3 +1,9 @@
+export const updateBooking = async (id: string, updates: Record<string, any>, token: string) => {
+  const res = await axios.put(`${API_URL}/bookings/requests/${id}`, updates, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
 export const deleteUser = async (id: string, token: string) => {
   const res = await axios.delete(`${API_URL}/users/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
