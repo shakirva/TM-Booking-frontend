@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import BookingDetailsModal from '../../booking/BookingDetailsModal';
-import BookingForm from '../../../components/BookingForm';
 import Modal from 'react-modal';
 import { Booking as FrontendBooking } from '../../../components/booking/BookingDataProvider';
 import { useRouter } from "next/navigation";
@@ -68,7 +67,9 @@ export default function BookingsPage() {
       notes: '',
       paymentType: booking.payment_mode === 'advance' ? 'advance' : 'full',
       advanceAmount: booking.advance_amount || '',
-      paymentMode: (booking.payment_mode as any) || 'cash',
+      paymentMode: (['bank', 'cash', 'upi'].includes((booking.payment_mode || '') as string)
+        ? (booking.payment_mode as 'bank' | 'cash' | 'upi')
+        : 'cash'),
       createdAt: '',
       updatedAt: '',
     };
@@ -132,7 +133,7 @@ export default function BookingsPage() {
       const data = await getRequests(token);
       setBookings(Array.isArray(data) ? data : []);
       setEditModalOpen(false);
-    } catch (err) {
+    } catch {
       alert('Failed to update booking.');
     }
   }

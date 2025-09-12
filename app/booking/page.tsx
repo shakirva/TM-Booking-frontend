@@ -367,7 +367,7 @@ export default function BookingPage() {
   const getBookedSlotIdsForDate = (date: Date) => {
     const dateString = formatDateForComparison(date);
     const bookings = getBookingsByDate(dateString) as Booking[];
-  return bookings.map((b) => (b as any).slot_id);
+  return bookings.map((b) => (b as unknown as { slot_id: number }).slot_id);
   };
 
   // Don't render until client-side hydration is complete

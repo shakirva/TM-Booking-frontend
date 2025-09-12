@@ -3,12 +3,14 @@ import React, { useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { useBooking } from "../../context/BookingContext";
 import { FaHome, FaShareAlt } from 'react-icons/fa';
-import Image from 'next/image';
 import html2canvas from "html2canvas";
 // Helper to get array or fallback to single value
-function getSlotArray<T = string>(slot: any, arrKey: string, singleKey: string): T[] {
-  if (Array.isArray(slot?.[arrKey])) return slot[arrKey];
-  if (slot?.[singleKey]) return [slot[singleKey]];
+function getSlotArray<T = string>(slot: unknown, arrKey: string, singleKey: string): T[] {
+  if (typeof slot === 'object' && slot !== null) {
+    const s = slot as Record<string, unknown>;
+    if (Array.isArray(s[arrKey])) return s[arrKey] as T[];
+    if (s[singleKey] !== undefined) return [s[singleKey] as T];
+  }
   return [];
 }
 
