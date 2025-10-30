@@ -36,7 +36,7 @@ export default function BookingsPage() {
   const [editingBooking, setEditingBooking] = useState<FrontendBooking | null>(null);
   // Local state for form fields
   const [editOccasion, setEditOccasion] = useState('');
-  // utility removed
+  const [editUtility, setEditUtility] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCustomerName, setEditCustomerName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
@@ -72,8 +72,8 @@ export default function BookingsPage() {
         : 'cash'),
       createdAt: '',
       updatedAt: '',
-    };
-         // utility removed
+  };
+}
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -96,7 +96,7 @@ export default function BookingsPage() {
   React.useEffect(() => {
     if (editModalOpen && editingBooking) {
       setEditOccasion(editingBooking.occasion || '');
-  // utility removed
+  // setEditUtility removed (utility no longer exists)
       setEditNotes(editingBooking.notes || '');
       setEditCustomerName(editingBooking.customerName || '');
       setEditCustomerPhone(editingBooking.customerPhone || '');
@@ -200,7 +200,16 @@ export default function BookingsPage() {
                   required
                 />
               </div>
-              {/* Utility Type field removed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Utility Type</label>
+                <input
+                  type="text"
+                  value={editUtility}
+                  onChange={e => setEditUtility(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 border-gray-300"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount</label>
                 <input
@@ -214,7 +223,7 @@ export default function BookingsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Type</label>
                 <select
                   value={editPaymentType}
-                  onChange={e => setEditPaymentType(e.target.value as 'advance' | 'full')}
+                      onChange={(e) => setEditPaymentType(e.target.value as 'advance' | 'full')}
                   className="w-full border rounded-lg px-3 py-2 border-gray-300"
                 >
                   <option value="advance">Advance</option>
@@ -252,7 +261,7 @@ export default function BookingsPage() {
         {/* Booking Details Modal (from edit modal) */}
         {showDetailsModal && editingBooking && (
           <BookingDetailsModal
-            bookings={editingBooking ? [editingBooking] : ([] as any[])}
+            bookings={[editingBooking]}
             onClose={() => setShowDetailsModal(false)}
           />
         )}
@@ -260,7 +269,7 @@ export default function BookingsPage() {
       {/* Booking Details Modal (from View button) */}
       {showDetailsModal && viewingBooking && (
         <BookingDetailsModal
-          bookings={viewingBooking ? [viewingBooking] : ([] as any[])}
+          bookings={[viewingBooking]}
           onClose={() => {
             setShowDetailsModal(false);
             setViewingBooking(null);
@@ -282,7 +291,7 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
-                {/* Utility Type column removed */}
+                <th className="py-3 px-4 font-medium">Utility Type</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>
@@ -300,7 +309,7 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.id}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.name}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
-                  {/* Utility Type cell removed */}
+                  {/* utility_type column removed */}
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">
@@ -347,3 +356,5 @@ export default function BookingsPage() {
     </div>
   );
 }
+
+// export default BookingsPage; (removed duplicate)
