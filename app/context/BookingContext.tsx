@@ -18,7 +18,6 @@ type BookingData = {
     selectedSlotPrice?: number;
     date?: string;
     occasion?: string;
-    utility?: string;
     notes?: string;
   };
   payment: {

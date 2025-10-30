@@ -22,9 +22,8 @@ export default function BookingPage() {
   }, [router]);
   // Fallback slots if backend not available
   const fallbackTimeSlots = [
-    { id: 1, label: 'Morning', time: '6:00 AM - 12:00 PM', price: 25000 },
-    { id: 2, label: 'Evening', time: '1:00 PM - 8:00 PM', price: 30000 },
-    { id: 3, label: 'Day', time: '9:00 AM - 6:00 PM', price: 60000 },
+    { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 25000 },
+    { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 30000 },
   ];
   interface Slot {
     id: number;
@@ -78,7 +77,7 @@ export default function BookingPage() {
   }, []);
 
   const [occasion, setOccasion] = useState(booking?.slot?.occasion ?? '');
-  const [utility, setUtility] = useState(booking?.slot?.utility ?? '');
+  // utility removed
   const [notes, setNotes] = useState(booking?.slot?.notes ?? '');
   const [selectedDateBookings, setSelectedDateBookings] = useState<Booking[]>([]);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -230,7 +229,7 @@ export default function BookingPage() {
           selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx]?.price || 0),
           date: localDateString,
           occasion,
-          utility,
+          // utility removed
           notes,
         },
       }));
@@ -247,6 +246,15 @@ export default function BookingPage() {
       }
       if (!customerPhone.trim()) {
         alert('Please enter customer phone');
+        return;
+      }
+      if (!/^\d{10}$/.test(customerPhone)) {
+        alert('Phone number must be exactly 10 digits');
+        return;
+      }
+      // Strict validation for Phone 2
+      if (customerPhone2.trim() && !/^\d{10}$/.test(customerPhone2)) {
+        alert('Phone 2 must be exactly 10 digits');
         return;
       }
       if (!address.trim()) {
@@ -271,10 +279,6 @@ export default function BookingPage() {
       // Validate payment details
       if (paymentType === 'advance') {
         const advance = parseInt(advanceAmount);
-        if (!advance || advance < minAdvance) {
-          alert(`Advance amount must be at least ₹${minAdvance.toLocaleString()}`);
-          return;
-        }
         if (advance > slotPrice) {
           alert('Advance amount cannot exceed total amount');
           return;
@@ -304,7 +308,7 @@ export default function BookingPage() {
             slot_id: slot.id,
             details: notes,
             occasion_type: occasion,
-            utility_type: utility,
+            // utility_type removed
             payment_mode: paymentMode,
             advance_amount: paymentType === 'advance' ? advanceAmount : '',
             date: localDateString,
@@ -443,8 +447,8 @@ export default function BookingPage() {
                     setSelectedSlots={setSelectedSlots}
                     occasion={occasion}
                     setOccasion={setOccasion}
-                    utility={utility}
-                    setUtility={setUtility}
+                    // utility prop removed
+                    // setUtility prop removed
                     notes={notes}
                     setNotes={setNotes}
                     timeSlots={timeSlots}
@@ -477,7 +481,7 @@ export default function BookingPage() {
                   brideName: '',
                   address: '',
                   occasion: details.occasion_type || details.occasion || '',
-                  utility: '',
+                  // utility removed
                   timeSlot: '',
                   slotTime: details.time || '',
                   price: 0,

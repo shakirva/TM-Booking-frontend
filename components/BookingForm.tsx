@@ -1,13 +1,12 @@
 import React from 'react';
-import { TimeSlot, Booking, occasionTypes, utilityTypes } from './booking/BookingDataProvider';
+import { TimeSlot, Booking, occasionTypes } from './booking/BookingDataProvider';
 
 interface BookingFormProps {
   selectedSlots: number[];
   setSelectedSlots: (slots: number[]) => void;
   occasion: string;
   setOccasion: (occasion: string) => void;
-  utility: string;
-  setUtility: (utility: string) => void;
+  // utility type removed
   notes: string;
   setNotes: (notes: string) => void;
   timeSlots: TimeSlot[];
@@ -23,8 +22,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
   setSelectedSlots,
   occasion,
   setOccasion,
-  utility,
-  setUtility,
+  // utility type removed
   notes,
   setNotes,
   timeSlots,
@@ -69,10 +67,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   disabled={isBooked}
                   onClick={() => {
                     if (isBooked) return;
-                    if (isSelected) {
-                      setSelectedSlots(selectedSlots.filter(i => i !== idx));
-                    } else {
-                      setSelectedSlots([...selectedSlots, idx]);
+                      if (isSelected) {
+                        setSelectedSlots([]);
+                      } else {
+                        setSelectedSlots([idx]);
                     }
                   }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors
@@ -141,19 +139,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 </select>
               </div>
 
-              <div className="mb-4">
-                <label className="block text-gray-700 mb-1 text-sm font-medium">Utility Type</label>
-                <select
-                  value={utility}
-                  onChange={e => setUtility(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-3 border-[#E5E7EB] outline-none focus:ring-2 focus:ring-blue-200 text-black placeholder:text-gray-400"
-                >
-                  <option value="">Select utility type</option>
-                  {utilityTypes.map((type: string) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-        </select>
-      </div>
+              {/* Utility type removed */}
       
       <div className="mb-4">
         <label className="block text-gray-700 mb-1 text-sm font-medium">Notes <span className="text-gray-400">(Optional)</span></label>

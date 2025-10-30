@@ -39,6 +39,7 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
 }) => {
   const inputClassName = "w-full rounded-lg px-3 py-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-200 text-black placeholder:text-gray-300";
   const readOnlyClassName = "w-full rounded-lg px-3 py-2 bg-gray-100 outline-none text-gray-600 cursor-not-allowed";
+  const [phoneError, setPhoneError] = React.useState<string>('');
 
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-4">
@@ -76,12 +77,24 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               <input
                 type="tel"
                 value={customerPhone}
-                onChange={e => setCustomerPhone(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (/^\d{0,10}$/.test(val)) {
+                    setCustomerPhone(val);
+                    if (val.length === 10) {
+                      setPhoneError('');
+                    } else {
+                      setPhoneError('Phone number must be exactly 10 digits');
+                    }
+                  }
+                }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
                 placeholder="Enter primary phone number"
                 readOnly={isReadOnly}
                 required
+                maxLength={10}
               />
+              {phoneError && <div className="text-red-500 text-xs mt-1">{phoneError}</div>}
             </div>
             <div>
               <label className="block text-gray-700 mb-1 text-sm font-medium">
@@ -90,11 +103,20 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
               <input
                 type="tel"
                 value={customerPhone2}
-                onChange={e => setCustomerPhone2(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (/^\d{0,10}$/.test(val)) {
+                    setCustomerPhone2(val);
+                  }
+                }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
                 placeholder="Enter secondary phone number"
                 readOnly={isReadOnly}
+                maxLength={10}
               />
+              {customerPhone2 && customerPhone2.length > 0 && customerPhone2.length !== 10 && (
+                <div className="text-red-500 text-xs mt-1">Phone number must be exactly 10 digits</div>
+              )}
             </div>
           </div>
         )}

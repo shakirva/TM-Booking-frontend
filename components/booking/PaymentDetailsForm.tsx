@@ -92,14 +92,16 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
           </label>
         </div>
 
-        {/* Total Amount Display */}
+        {/* Total and Balance Amount Display */}
         <div className="bg-gray-50 rounded-lg p-4 flex flex-col gap-1 text-sm">
           <div className="flex justify-between font-bold mt-1">
             <span className='text-black'>Total Amount</span>
             <span className='text-black'>₹{totalAmount.toLocaleString()}</span>
           </div>
-         
-        
+          <div className="flex justify-between font-bold mt-1">
+            <span className='text-black'>Balance Amount</span>
+            <span className='text-black'>₹{(totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
+          </div>
         </div>
 
         {/* Payment Mode */}

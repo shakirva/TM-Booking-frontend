@@ -13,8 +13,7 @@ export default function DashboardPage() {
     customerName?: string;
     occasion_type?: string;
     occasion?: string;
-    utility_type?: string;
-    utility?: string;
+  // utility_type removed
     payment_mode?: string;
     paymentMode?: string;
     advance_amount?: string;
@@ -35,7 +34,7 @@ export default function DashboardPage() {
         const mappedBookings = bookingsData.map((b: BookingDisplay) => ({
           ...b,
           occasion_type: b.occasion_type ?? b.occasion ?? '-',
-          utility_type: b.utility_type ?? b.utility ?? '-',
+          // utility_type removed
           payment_mode: b.payment_mode ?? b.paymentMode ?? '-',
           name: b.name ?? b.customerName ?? '-',
           advance_amount: b.advance_amount ?? '-',
@@ -155,7 +154,7 @@ export default function DashboardPage() {
                   <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                   <th className="py-3 px-4 font-medium">Customer</th>
                   <th className="py-3 px-4 font-medium">Occasion Type</th>
-                  <th className="py-3 px-4 font-medium">Utility Type</th>
+                  {/* Utility Type column removed */}
                   <th className="py-3 px-4 font-medium">Payment Mode</th>
                   <th className="py-3 px-4 font-medium">Advance Amount</th>
                   <th className="py-3 px-4 font-medium">Booked Date</th>
@@ -168,7 +167,7 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{String((booking as BookingDisplay).id ?? '')}</td>
                     <td className="py-3 px-4 font-medium border-b border-[#E5E7EB]">{(booking as BookingDisplay).name ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).utility_type ?? '-'}</td>
+                    {/* Utility Type cell removed */}
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? new Date((booking as BookingDisplay).date as string).toLocaleDateString() : '-'}</td>
@@ -216,7 +215,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <div className="font-medium text-black">{(event as BookingDisplay).occasion_type ?? 'Event'}</div>
-                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).utility_type ?? '-'} | {(event as BookingDisplay).payment_mode ?? '-'}</div>
+                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).payment_mode ?? '-'}</div>
                   </div>
                 </div>
               );

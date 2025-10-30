@@ -12,7 +12,7 @@ type Booking = {
   id: number;
   name: string;
   occasion_type?: string;
-  utility_type?: string;
+  // utility_type removed
   payment_mode?: string;
   advance_amount?: string;
   slot_id: number;
@@ -36,7 +36,7 @@ export default function BookingsPage() {
   const [editingBooking, setEditingBooking] = useState<FrontendBooking | null>(null);
   // Local state for form fields
   const [editOccasion, setEditOccasion] = useState('');
-  const [editUtility, setEditUtility] = useState('');
+  // utility removed
   const [editNotes, setEditNotes] = useState('');
   const [editCustomerName, setEditCustomerName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
@@ -60,7 +60,7 @@ export default function BookingsPage() {
       brideName: '',
       address: '',
       occasion: booking.occasion_type || '',
-      utility: booking.utility_type || '',
+    // utility removed
       timeSlot: '',
       slotTime: booking.time || '',
       price: 0,
@@ -73,7 +73,7 @@ export default function BookingsPage() {
       createdAt: '',
       updatedAt: '',
     };
-  }
+         // utility removed
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -96,7 +96,7 @@ export default function BookingsPage() {
   React.useEffect(() => {
     if (editModalOpen && editingBooking) {
       setEditOccasion(editingBooking.occasion || '');
-      setEditUtility(editingBooking.utility || '');
+  // utility removed
       setEditNotes(editingBooking.notes || '');
       setEditCustomerName(editingBooking.customerName || '');
       setEditCustomerPhone(editingBooking.customerPhone || '');
@@ -117,7 +117,7 @@ export default function BookingsPage() {
     // Prepare update payload (add more fields as needed)
     const updates = {
       occasion_type: editOccasion,
-      utility_type: editUtility,
+       // utility_type removed
       notes: editNotes,
       customerName: editCustomerName,
       customerPhone: editCustomerPhone,
@@ -200,16 +200,7 @@ export default function BookingsPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Utility Type</label>
-                <input
-                  type="text"
-                  value={editUtility}
-                  onChange={e => setEditUtility(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 border-gray-300"
-                  required
-                />
-              </div>
+              {/* Utility Type field removed */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount</label>
                 <input
@@ -261,7 +252,7 @@ export default function BookingsPage() {
         {/* Booking Details Modal (from edit modal) */}
         {showDetailsModal && editingBooking && (
           <BookingDetailsModal
-            bookings={[editingBooking]}
+            bookings={editingBooking ? [editingBooking] : ([] as any[])}
             onClose={() => setShowDetailsModal(false)}
           />
         )}
@@ -269,7 +260,7 @@ export default function BookingsPage() {
       {/* Booking Details Modal (from View button) */}
       {showDetailsModal && viewingBooking && (
         <BookingDetailsModal
-          bookings={[viewingBooking]}
+          bookings={viewingBooking ? [viewingBooking] : ([] as any[])}
           onClose={() => {
             setShowDetailsModal(false);
             setViewingBooking(null);
@@ -291,7 +282,7 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
-                <th className="py-3 px-4 font-medium">Utility Type</th>
+                {/* Utility Type column removed */}
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>
@@ -309,7 +300,7 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.id}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.name}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility_type || '-'}</td>
+                  {/* Utility Type cell removed */}
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">

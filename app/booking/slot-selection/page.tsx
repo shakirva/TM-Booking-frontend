@@ -42,7 +42,7 @@ export default function SlotSelectionPage() {
     }
   }, [booking?.slot?.date]);
   const [occasion, setOccasion] = useState(booking?.slot?.occasion ?? '');
-  const [utility, setUtility] = useState(booking?.slot?.utility ?? '');
+  // utility removed
   const [notes, setNotes] = useState(booking?.slot?.notes ?? '');
   const [selectedDateBookings, setSelectedDateBookings] = useState<Booking[]>([]);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
@@ -174,7 +174,7 @@ export default function SlotSelectionPage() {
           selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx].price),
           date: formatDateForComparison(date),
           occasion,
-          utility,
+          // utility removed
           notes,
         },
         personal: {
@@ -204,7 +204,7 @@ export default function SlotSelectionPage() {
           selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx].price),
           date: formatDateForComparison(date),
           occasion,
-          utility,
+          // utility removed
           notes,
         },
       }));
@@ -273,8 +273,8 @@ export default function SlotSelectionPage() {
                   setSelectedSlots={setSelectedSlots}
                   occasion={occasion}
                   setOccasion={setOccasion}
-                  utility={utility}
-                  setUtility={setUtility}
+                    // utility prop removed
+                  // setUtility prop removed
                   notes={notes}
                   setNotes={setNotes}
                   timeSlots={timeSlots.map((slot) => ({
@@ -329,7 +329,7 @@ export default function SlotSelectionPage() {
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customerName}</td>
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.customerPhone}</td>
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion}</td>
-                          <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.utility}</td>
+                          {/* utility column removed */}
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.notes}</td>
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.paymentMode}</td>
                           <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date}</td>

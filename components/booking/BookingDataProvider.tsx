@@ -14,7 +14,7 @@ export interface Booking {
   brideName?: string;
   address: string;
   occasion: string;
-  utility: string;
+  // utility type removed
   timeSlot: string;
   slotTime: string;
   price: number;
@@ -37,7 +37,7 @@ export interface BookingFormData {
     selectedTab: 'Reception' | 'Day Time';
     selectedSlots: number[];
   occasion: string;
-  utility: string;
+  // utility type removed
   notes: string;
   
   // Personal Details
@@ -58,10 +58,8 @@ export interface BookingFormData {
 // Removed mockBookings, now using backend API
 
 export const timeSlots: TimeSlot[] = [
-  { label: 'Morning Slot', time: '9:00 AM - 1:00 PM', price: 20000 },
-  { label: 'Afternoon Slot', time: '2:00 PM - 6:00 PM', price: 25000 },
-  { label: 'Evening Slot', time: '6:00 PM - 10:00 PM', price: 30000 },
-  { label: 'Night Slot', time: '10:00 PM - 2:00 AM', price: 35000 }
+  { label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 25000 },
+  { label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 30000 }
 ];
 
 export const occasionTypes = [
@@ -74,15 +72,10 @@ export const occasionTypes = [
   'Other'
 ];
 
-export const utilityTypes = [
-  'Basic Setup',
-  'Premium Setup',
-  'Luxury Setup',
-  'Custom Setup'
-];
+// Utility types removed
 
 // Context type
-type BookingDataContextType = {
+export interface BookingDataContextType {
   currentBooking: BookingFormData | null;
   setCurrentBooking: Dispatch<SetStateAction<BookingFormData | null>>;
   bookings: Booking[];
@@ -171,7 +164,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
       selectedTab: 'Reception', // or 'Day Time' if you want to infer from booking
       selectedSlots: slotTimes.length > 0 ? slotTimes.map(label => timeSlots.findIndex(ts => ts.time === label)).filter(idx => idx !== -1) : [],
       occasion: booking.occasion,
-      utility: booking.utility || 'Basic Setup',
+  // utility removed
       notes: booking.notes,
       customerName: booking.customerName,
       customerPhone: booking.customerPhone,

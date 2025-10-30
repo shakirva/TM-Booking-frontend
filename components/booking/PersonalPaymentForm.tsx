@@ -54,7 +54,7 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
   paymentMode,
   setPaymentMode,
   totalAmount,
-  minAdvance = 10000,
+  // minAdvance removed
   
   // Edit mode props
   isEditMode = false,
@@ -192,14 +192,14 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 <div className="font-medium text-black">Advance Payment</div>
                 <input
                   type="number"
-                  min={minAdvance}
+                  min={0}
                   placeholder="Enter Amount"
                   value={advanceAmount}
                   onChange={e => setAdvanceAmount(e.target.value)}
                   className={isReadOnly ? paymentReadOnlyClassName : paymentInputClassName}
                   disabled={paymentType !== 'advance' || isReadOnly}
                 />
-                <div className="text-xs text-gray-400 mt-1">Min : ₹{minAdvance.toLocaleString()}</div>
+                {/* Min advance removed */}
               </div>
               <input
                 type="radio"
@@ -230,11 +230,11 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
             </label>
           </div>
 
-          {/* Total Amount Display */}
+          {/* Balance Amount Display */}
           <div className="bg-gray-50 rounded-lg p-4 flex flex-col gap-1 text-sm">
             <div className="flex justify-between font-bold mt-1">
-              <span className='text-black'>Total Amount</span>
-              <span className='text-black'>₹{totalAmount.toLocaleString()}</span>
+              <span className='text-black'>Balance Amount</span>
+              <span className='text-black'>₹{(totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
             </div>
           </div>
 
