@@ -63,14 +63,19 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
               />
               <div className="text-xs text-gray-400 mt-1">Min : ₹{minAdvance.toLocaleString()}</div>
             </div>
-            <input
-              type="radio"
-              name="paymentType"
-              checked={paymentType === 'advance'}
-              onChange={() => !isReadOnly && setPaymentType('advance')}
-              className="accent-blue-600 mt-2"
-              disabled={isReadOnly}
-            />
+              <input
+                type="radio"
+                name="paymentType"
+                checked={paymentType === 'advance'}
+                onChange={() => {
+                  if (!isReadOnly) {
+                    setPaymentType('advance');
+                    setAdvanceAmount('');
+                  }
+                }}
+                className="accent-blue-600 mt-2"
+                disabled={isReadOnly}
+              />
           </label>
           
           {/* Full Payment Option */}
@@ -81,14 +86,19 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
               <div className="font-medium text-black">Full Payment</div>
               <div className="mt-2 text-lg font-semibold text-black">₹{totalAmount.toLocaleString()}</div>
             </div>
-            <input
-              type="radio"
-              name="paymentType"
-              checked={paymentType === 'full'}
-              onChange={() => !isReadOnly && setPaymentType('full')}
-              className="accent-blue-600 mt-2"
-              disabled={isReadOnly}
-            />
+              <input
+                type="radio"
+                name="paymentType"
+                checked={paymentType === 'full'}
+                onChange={() => {
+                  if (!isReadOnly) {
+                    setPaymentType('full');
+                    setAdvanceAmount(totalAmount.toString());
+                  }
+                }}
+                className="accent-blue-600 mt-2"
+                disabled={isReadOnly}
+              />
           </label>
         </div>
 
@@ -98,10 +108,10 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
             <span className='text-black'>Total Amount</span>
             <span className='text-black'>₹{totalAmount.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between font-bold mt-1">
-            <span className='text-black'>Balance Amount</span>
-            <span className='text-black'>₹{(totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
-          </div>
+            <div className="flex justify-between font-bold mt-1">
+              <span className='text-black'>Balance Amount</span>
+              <span className='text-black'>₹{paymentType === 'full' ? '0' : (totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
+            </div>
         </div>
 
         {/* Payment Mode */}

@@ -160,7 +160,7 @@ export default function BookingConfirmationPage() {
           <div className="text-gray-600">Total Amount</div>
           <div className="text-black font-medium">₹{totalAmount ? totalAmount.toLocaleString() : '-'}</div>
           <div className="text-gray-600">Balance Amount</div>
-          <div className="text-black font-medium">₹{typeof totalAmount === 'number' && payment.advanceAmount ? (totalAmount - (parseFloat(payment.advanceAmount) || 0)).toLocaleString() : '-'}</div>
+          <div className="text-black font-medium">₹{typeof totalAmount === 'number' && payment.advanceAmount ? (totalAmount - (parseFloat(payment.advanceAmount) || 0)).toLocaleString() : '0'}</div>
         </div>
       </div>
      

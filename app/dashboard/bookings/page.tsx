@@ -36,7 +36,7 @@ export default function BookingsPage() {
   const [editingBooking, setEditingBooking] = useState<FrontendBooking | null>(null);
   // Local state for form fields
   const [editOccasion, setEditOccasion] = useState('');
-  const [editUtility, setEditUtility] = useState('');
+  // utility_type removed
   const [editNotes, setEditNotes] = useState('');
   const [editCustomerName, setEditCustomerName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
@@ -200,16 +200,7 @@ export default function BookingsPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Utility Type</label>
-                <input
-                  type="text"
-                  value={editUtility}
-                  onChange={e => setEditUtility(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 border-gray-300"
-                  required
-                />
-              </div>
+              {/* Utility Type input removed */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount</label>
                 <input
@@ -291,7 +282,7 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
-                <th className="py-3 px-4 font-medium">Utility Type</th>
+                {/* Utility Type column removed */}
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>

@@ -152,7 +152,7 @@ export default function BookingPage() {
       if (booked) {
         console.log('[DEBUG] tileClassName: Booked date', date);
         // Use Tailwind red classes for booked dates
-        return 'bg-red-200 text-red-800 font-bold rounded-full';
+        return 'bg-red-200 text-red-800 font-bold ';
       } else if (isDateAvailable(date)) {
         return 'available-date';
       }
