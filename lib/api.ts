@@ -1,10 +1,19 @@
 export const updateBooking = async (id: string, updates: Record<string, unknown>, token: string) => {
-  const res = await axios.put(`${API_URL}/bookings/requests/${id}`, updates, {
+  // If API_URL is configured, call backend directly; otherwise use Next API proxy
+  if (API_URL) {
+    const res = await axios.put(`${API_URL}/bookings/requests/${id}`, updates, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  }
+  const res = await axios.put(`/api/bookings/${id}`, updates, {
     headers: { Authorization: `Bearer ${token}` },
   });
-    return res.data;
-  };
+  return res.data;
+};
+
 export const deleteUser = async (id: string, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.delete(`${API_URL}/users/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -12,6 +21,7 @@ export const deleteUser = async (id: string, token: string) => {
 };
 // User management
 export const getUsers = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.get(`${API_URL}/users`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -19,6 +29,7 @@ export const getUsers = async (token: string) => {
 };
 
 export const addUser = async (data: { username: string; password: string; role: string }, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.post(`${API_URL}/users`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -26,10 +37,13 @@ export const addUser = async (data: { username: string; password: string; role: 
 };
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+// Prefer runtime-configured public API URL; avoid falling back to localhost in production
+// If not provided, for selected endpoints we will call Next.js API routes as a safe proxy.
+const API_URL = process.env.NEXT_PUBLIC_API_URL; // e.g., https://api.example.com/api
 
 // Update user profile (name, profile image)
 export const updateProfile = async (data: { name: string; profileImage: string }, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.put(`${API_URL}/users/profile`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -38,6 +52,7 @@ export const updateProfile = async (data: { name: string; profileImage: string }
 
 // Change user password
 export const changePassword = async (data: { currentPassword: string; newPassword: string }, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.put(`${API_URL}/users/password`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -45,11 +60,13 @@ export const changePassword = async (data: { currentPassword: string; newPasswor
 };
 
 export const login = async (username: string, password: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.post(`${API_URL}/auth/login`, { username, password });
   return res.data;
 };
 
 export const getSlots = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.get(`${API_URL}/bookings/slots`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -57,6 +74,7 @@ export const getSlots = async (token: string) => {
 };
 
 export const createSlot = async (slot: Record<string, unknown>, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.post(`${API_URL}/bookings/slots`, slot, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -64,6 +82,7 @@ export const createSlot = async (slot: Record<string, unknown>, token: string) =
 };
 
 export const getRequests = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.get(`${API_URL}/bookings/requests`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -71,6 +90,7 @@ export const getRequests = async (token: string) => {
 };
 
 export const updateRequestStatus = async (id: number, status: string, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.put(`${API_URL}/bookings/requests/${id}`, { status }, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -78,11 +98,17 @@ export const updateRequestStatus = async (id: number, status: string, token: str
 };
 
 export const createBookingRequest = async (data: Record<string, unknown>) => {
-  const res = await axios.post(`${API_URL}/bookings/request`, data);
+  // If API_URL is configured, hit backend directly; otherwise use Next API proxy
+  if (API_URL) {
+    const res = await axios.post(`${API_URL}/bookings/request`, data);
+    return res.data;
+  }
+  const res = await axios.post(`/api/bookings/request`, data);
   return res.data;
 };
 
 export const getDashboardSummary = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.get(`${API_URL}/dashboard/summary`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -90,6 +116,7 @@ export const getDashboardSummary = async (token: string) => {
 };
 
 export const deleteBooking = async (id: string, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.delete(`${API_URL}/bookings/requests/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
