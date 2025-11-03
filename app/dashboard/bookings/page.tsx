@@ -33,10 +33,11 @@ export default function BookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingBooking, setEditingBooking] = useState<FrontendBooking | null>(null);
+  // Editing functionality is currently disabled; keep state value only to avoid unused setter lint error
+  const [editingBooking] = useState<FrontendBooking | null>(null);
   // Local state for form fields
   const [editOccasion, setEditOccasion] = useState('');
-  // utility_type removed
+  const [editUtility, setEditUtility] = useState('');
   const [editNotes, setEditNotes] = useState('');
   const [editCustomerName, setEditCustomerName] = useState('');
   const [editCustomerPhone, setEditCustomerPhone] = useState('');
@@ -200,7 +201,16 @@ export default function BookingsPage() {
                   required
                 />
               </div>
-              {/* Utility Type input removed */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Utility Type</label>
+                <input
+                  type="text"
+                  value={editUtility}
+                  onChange={e => setEditUtility(e.target.value)}
+                  className="w-full border rounded-lg px-3 py-2 border-gray-300"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Advance Amount</label>
                 <input
@@ -282,7 +292,7 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
-                {/* Utility Type column removed */}
+                {/* <th className="py-3 px-4 font-medium">Utility Type</th> */}
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>
@@ -311,14 +321,14 @@ export default function BookingsPage() {
                         : '-'}
                   </td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB] flex gap-2">
-                    <button
+                    {/* <button
                       className="text-blue-500 hover:text-blue-700 font-bold text-sm border border-blue-100 rounded px-2 py-1"
                       onClick={e => {
                         e.stopPropagation();
                         setEditingBooking(mapToFrontendBooking(booking));
                         setEditModalOpen(true);
                       }}
-                    >Edit</button>
+                    >Edit</button> */}
                     <button
                       className="text-green-600 hover:text-green-800 font-bold text-sm border border-green-100 rounded px-2 py-1"
                       onClick={e => {

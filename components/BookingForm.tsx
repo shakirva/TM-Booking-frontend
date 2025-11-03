@@ -73,10 +73,13 @@ const BookingForm: React.FC<BookingFormProps> = ({
                         setSelectedSlots([idx]);
                     }
                   }}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border transition-colors
+                  className={`w-full flex items-center justify-between px-4 py-4 rounded-lg border transition-colors min-h-[64px]
                     ${isBooked ? 'bg-red-100 text-red-500 border-red-400 cursor-not-allowed' : isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-black border-gray-300 hover:bg-blue-50'}`}
                 >
-                  <span>{slot.label} <span className={`text-xs ${isSelected ? 'text-white' : 'text-gray-500'}`}>({slot.time})</span></span>
+                  <span className="flex-1 min-w-0 truncate">
+                    {slot.label}{' '}
+                    <span className={`text-xs ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>({slot.time})</span>
+                  </span>
                   <span className="text-sm font-semibold">₹{slot.price.toLocaleString()}</span>
                   {isBooked && <span className="ml-2 text-xs text-red-500 font-bold">Booked</span>}
                   {isSelected && !isBooked && <span className="ml-2 text-xs text-green-200">Selected</span>}

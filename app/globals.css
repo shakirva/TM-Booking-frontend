@@ -1,20 +1,6 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Arvo:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 @import "tailwindcss";
-/* Custom styles for react-calendar booked dates using Tailwind classes */
-.react-calendar__tile.bg-red-200 {
-  background-color: #fecaca !important; /* Tailwind's bg-red-200 */
-}
-.react-calendar__tile.text-red-800 {
-  color: #991b1b !important; /* Tailwind's text-red-800 */
-}
-.react-calendar__tile.font-bold {
-  font-weight: bold !important;
-}
-.react-calendar__tile.rounded-full {
-  border-radius: 9999px !important;
-}
 
 :root {
   --background: #ffffff;
@@ -25,7 +11,9 @@
   font-family: "Arvo", serif;
 }
 
-@theme inline {
+/* NOTE: Tailwind v4 provides an experimental `@theme` at-rule which some editors flag as unknown.
+   To avoid false diagnostics in VS Code's CSS language server, we inline equivalent CSS variables. */
+:root {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);

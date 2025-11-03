@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { getToken } from '@/lib/auth';
+import { getToken, removeToken } from '@/lib/auth';
 import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../context/BookingContext';
@@ -22,8 +22,8 @@ export default function BookingPage() {
   }, [router]);
   // Fallback slots if backend not available
   const fallbackTimeSlots = [
-    { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 25000 },
-    { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 30000 },
+    { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 40000 },
+    { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 },
   ];
   interface Slot {
     id: number;
@@ -151,8 +151,8 @@ export default function BookingPage() {
       const booked = isDateBooked(date);
       if (booked) {
         console.log('[DEBUG] tileClassName: Booked date', date);
-        // Use Tailwind red classes for booked dates
-        return 'bg-red-200 text-red-800 font-bold ';
+        // Use custom class to style booked dates (red background)
+        return 'booked-date';
       } else if (isDateAvailable(date)) {
         return 'available-date';
       }
@@ -400,6 +400,18 @@ export default function BookingPage() {
             <h2 className="flex-1 text-center font-semibold text-lg text-black">
               {getStepTitle()}
             </h2>
+            <button
+              type="button"
+              onClick={() => {
+                removeToken();
+                router.push('/auth/login');
+              }}
+              className="ml-2 px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+              aria-label="Logout"
+              title="Logout"
+            >
+              Logout
+            </button>
           </div>
           <form className="flex flex-col gap-3" onSubmit={handleNext}>
             {submitError && <div className="text-red-500 text-sm mb-2">{submitError}</div>}
@@ -440,37 +452,59 @@ export default function BookingPage() {
                 {selectedDateBookings.length > 0 && !isEditMode && (
                   <></>
                 )}
+                {/* Show editable form when in edit mode */}
+                {isEditMode && date && (
+                  <section>
+                    <BookingForm
+                      selectedSlots={selectedSlots}
+                      setSelectedSlots={setSelectedSlots}
+                      occasion={occasion}
+                      setOccasion={setOccasion}
+                      notes={notes}
+                      setNotes={setNotes}
+                      timeSlots={timeSlots}
+                      date={date}
+                      isEditMode={isEditMode}
+                      editingBooking={editingBooking}
+                      bookedTimes={(() => {
+                        const bookedSlotIds = getBookedSlotIdsForDate(date);
+                        return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
+                      })()}
+                    />
+                  </section>
+                )}
                 {/* Booking Form - Show by default OR when in edit mode OR when available date is selected and there are available slots */}
                 {date && (
-                  <BookingForm
-                    selectedSlots={selectedSlots}
-                    setSelectedSlots={setSelectedSlots}
-                    occasion={occasion}
-                    setOccasion={setOccasion}
-                    // utility prop removed
-                    // setUtility prop removed
-                    notes={notes}
-                    setNotes={setNotes}
-                    timeSlots={timeSlots}
-                    date={date}
-                    isEditMode={isEditMode}
-                    editingBooking={editingBooking}
-                    // Mark slots as booked if their slot_id is in bookedSlotIds
-                    bookedTimes={(() => {
-                      const bookedSlotIds = getBookedSlotIdsForDate(date);
-                      return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
-                    })()}
-                  />
+                  <section>
+                    <BookingForm
+                      selectedSlots={selectedSlots}
+                      setSelectedSlots={setSelectedSlots}
+                      occasion={occasion}
+                      setOccasion={setOccasion}
+                      // utility prop removed
+                      // setUtility prop removed
+                      notes={notes}
+                      setNotes={setNotes}
+                      timeSlots={timeSlots}
+                      date={date}
+                      isEditMode={isEditMode}
+                      editingBooking={editingBooking}
+                      // Mark slots as booked if their slot_id is in bookedSlotIds
+                      bookedTimes={(() => {
+                        const bookedSlotIds = getBookedSlotIdsForDate(date);
+                        return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
+                      })()}
+                    />
+                  </section>
                 )}
               </section>
             )}
           {/* Show modal if a booked date is clicked */}
-          {showDetailsModal && modalBookings.length > 0 && (
+          {showDetailsModal && modalBookings.length > 0 && !isEditMode && (
             <BookingDetailsModal
               bookings={modalBookings}
               onClose={() => setShowDetailsModal(false)}
               onEdit={(details) => {
-                // Map BookingDetails to Booking type
                 setEditingBooking({
                   id: details.id,
                   date: details.date || '',
@@ -481,16 +515,15 @@ export default function BookingPage() {
                   brideName: '',
                   address: '',
                   occasion: details.occasion_type || details.occasion || '',
-                  // utility removed
-                  timeSlot: '',
+                  timeSlot: details.time || '',
                   slotTime: details.time || '',
-                  price: 0,
-                  notes: '',
                   paymentType: details.payment_mode === 'advance' ? 'advance' : 'full',
                   advanceAmount: details.advance_amount || details.advanceAmount || '',
                   paymentMode: (['bank', 'cash', 'upi'].includes((details.payment_mode || details.paymentMode) as string)
                     ? (details.payment_mode || details.paymentMode)
                     : 'cash') as 'bank' | 'cash' | 'upi',
+                  price: 0,
+                  notes: '',
                   createdAt: '',
                   updatedAt: '',
                 });
@@ -499,7 +532,6 @@ export default function BookingPage() {
               }}
             />
           )}
-
             {/* Step 2: Personal & Payment Details Combined */}
             {currentStep === 'personal-payment' && (
               <PersonalPaymentForm
@@ -526,7 +558,6 @@ export default function BookingPage() {
                 isEditMode={isPersonalEditMode}
               />
             )}
-
             {/* Cancel Button - Only show in edit mode */}
             {isEditMode && (
               <button
@@ -540,7 +571,6 @@ export default function BookingPage() {
                 Cancel
               </button>
             )}
-
             {/* Navigation Button */}
             <button
               type="submit"
@@ -551,6 +581,138 @@ export default function BookingPage() {
           </form>
         </div>
       </main>
+      {/* Professional Edit Modal - moved outside main <form> */}
+      {isEditMode && editingBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-8">
+            <h3 className="font-bold text-2xl mb-6 text-center text-blue-700">Edit Booking</h3>
+            <form className="space-y-6" onSubmit={async (e) => {
+              e.preventDefault();
+              // Only require customer name and phone
+              if (!editingBooking.customerName || !editingBooking.customerPhone) {
+                setSubmitError('Please fill all required fields.');
+                return;
+              }
+              // Find slot_id from timeSlots
+              const selectedSlot = timeSlots.find(slot => slot.label === editingBooking.timeSlot) || timeSlots[0];
+              const slot_id = selectedSlot.id;
+              // Prepare payload for backend
+              const payload = {
+                id: editingBooking.id,
+                name: editingBooking.customerName,
+                phone: editingBooking.customerPhone,
+                slot_id,
+                details: editingBooking.notes,
+                occasion_type: editingBooking.occasion,
+                payment_mode: editingBooking.paymentMode,
+                advance_amount: editingBooking.advanceAmount,
+                date: editingBooking.date,
+                time: selectedSlot.time,
+                customer_name: editingBooking.customerName,
+                customer_phone: editingBooking.customerPhone,
+                customer_phone2: editingBooking.customerPhone2,
+                groom_name: editingBooking.groomName,
+                bride_name: editingBooking.brideName,
+                address: editingBooking.address,
+                payment_type: editingBooking.paymentType,
+              };
+              try {
+                const response = await fetch(`/api/bookings/${editingBooking.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(payload),
+                });
+                if (response.ok) {
+                  setSubmitError(null);
+                  alert('Booking updated successfully!');
+                  setIsEditMode(false);
+                  setEditingBooking(null);
+                  await fetchBookings();
+                } else {
+                  const errorData = await response.json();
+                  setSubmitError(errorData.message || 'Failed to update booking.');
+                }
+              } catch {
+                setSubmitError('Failed to update booking.');
+              }
+            }}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Customer Name</label>
+                  <input type="text" value={editingBooking.customerName} onChange={e => setEditingBooking({ ...editingBooking, customerName: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Phone</label>
+                  <input type="text" value={editingBooking.customerPhone} onChange={e => setEditingBooking({ ...editingBooking, customerPhone: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Occasion</label>
+                  <select value={editingBooking.occasion} onChange={e => setEditingBooking({ ...editingBooking, occasion: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                    <option value="">Select Occasion</option>
+                    <option value="Wedding Reception">Wedding Reception</option>
+                    <option value="Birthday">Birthday</option>
+                    <option value="Engagement">Engagement</option>
+                    <option value="Anniversary">Anniversary</option>
+                    <option value="Corporate Event">Corporate Event</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Address</label>
+                  <input type="text" value={editingBooking.address} onChange={e => setEditingBooking({ ...editingBooking, address: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Advance Amount</label>
+                  <input type="number" value={editingBooking.advanceAmount} onChange={e => setEditingBooking({ ...editingBooking, advanceAmount: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Payment Type</label>
+                  <select value={editingBooking.paymentType} onChange={e => setEditingBooking({ ...editingBooking, paymentType: e.target.value as 'advance' | 'full' })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                    <option value="advance">Advance</option>
+                    <option value="full">Full</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Payment Mode</label>
+                  <select value={editingBooking.paymentMode} onChange={e => setEditingBooking({ ...editingBooking, paymentMode: e.target.value as 'bank' | 'cash' | 'upi' })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                    <option value="bank">Bank</option>
+                    <option value="cash">Cash</option>
+                    <option value="upi">UPI</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-black mb-2">Date</label>
+                  <input type="date" value={editingBooking.date} onChange={e => setEditingBooking({ ...editingBooking, date: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-black mb-2">Slot</label>
+                <select value={editingBooking.timeSlot || ''} onChange={e => setEditingBooking({ ...editingBooking, timeSlot: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                  <option value="" disabled>Select Slot</option>
+                  {timeSlots.map(slot => (
+                    <option key={slot.id} value={slot.label}>{slot.label} ({slot.time})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-black mb-2">Notes</label>
+                <textarea value={editingBooking.notes} onChange={e => setEditingBooking({ ...editingBooking, notes: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" rows={2} />
+              </div>
+              <div className="flex gap-4 mt-8 justify-end">
+                <button type="button" className="bg-gray-300 text-black py-2 px-5 rounded hover:bg-gray-400 font-semibold" onClick={() => { setIsEditMode(false); setEditingBooking(null); }}>Cancel</button>
+                <button type="submit" className="bg-blue-600 text-white py-2 px-5 rounded hover:bg-blue-700 font-semibold">Update Booking</button>
+              </div>
+              {submitError && <div className="text-red-500 text-sm mt-4 text-center">{submitError}</div>}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 // ...existing code...

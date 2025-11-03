@@ -58,8 +58,8 @@ export interface BookingFormData {
 // Removed mockBookings, now using backend API
 
 export const timeSlots: TimeSlot[] = [
-  { label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 25000 },
-  { label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 30000 }
+  { label: 'Lunch Time', time: '10:00 AM - 6:00 PM', price: 40000 },
+  { label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 }
 ];
 
 export const occasionTypes = [

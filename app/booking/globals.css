@@ -4,3 +4,10 @@
   font-weight: bold;
   border-radius: 9999px;
 }
+/* Selected slot button style for better readability */
+.selected-slot {
+  background: #204DC5 !important;
+  color: #fff !important;
+  font-weight: bold;
+  border-radius: 12px;
+}

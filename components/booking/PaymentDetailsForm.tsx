@@ -34,6 +34,11 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
   const inputClassName = "w-full border rounded-md px-2 py-3 bg-white text-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-200 border border-[#E5E7EB]";
   const readOnlyClassName = "w-full border rounded-md px-2 py-3 bg-gray-100 text-gray-600 text-sm cursor-not-allowed border border-gray-300";
 
+  // Normalize amounts for display/calculation
+  const advancePaid = Math.max(0, parseFloat(advanceAmount || '0') || 0);
+  const paid = paymentType === 'full' ? totalAmount : Math.min(totalAmount, advancePaid);
+  const balance = Math.max(0, totalAmount - paid);
+
   return (
     <section className="bg-white rounded-xl border border-gray-200 p-4">
       <h3 className="font-semibold text-base mb-3 text-black border-b border-gray-200 pb-2">
@@ -47,58 +52,71 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
           <label className="text-gray-700 mb-1 text-sm font-medium">Payment Type</label>
           
           {/* Advance Payment Option */}
-          <label className={`border rounded-lg px-4 py-3 cursor-pointer flex items-start gap-2 ${
+          <label
+            className={`border rounded-lg px-4 py-3 cursor-pointer flex items-start gap-2 ${
             paymentType === 'advance' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
-          } ${isReadOnly ? 'cursor-not-allowed opacity-60' : ''}`}>
+          } ${isReadOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+            onClick={() => {
+              if (isReadOnly) return;
+              setPaymentType('advance');
+            }}
+          >
             <div className="flex-1">
               <div className="font-medium text-black">Advance Payment</div>
               <input
                 type="number"
                 min={minAdvance}
                 placeholder="Enter Amount"
-                value={advanceAmount}
+                value={paymentType === 'advance' ? advanceAmount : ''}
                 onChange={e => setAdvanceAmount(e.target.value)}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
                 disabled={paymentType !== 'advance' || isReadOnly}
               />
               <div className="text-xs text-gray-400 mt-1">Min : ₹{minAdvance.toLocaleString()}</div>
             </div>
-              <input
-                type="radio"
-                name="paymentType"
-                checked={paymentType === 'advance'}
-                onChange={() => {
-                  if (!isReadOnly) {
-                    setPaymentType('advance');
-                    setAdvanceAmount('');
-                  }
-                }}
-                className="accent-blue-600 mt-2"
-                disabled={isReadOnly}
-              />
+            <input
+              type="radio"
+              name="paymentType"
+              checked={paymentType === 'advance'}
+              onChange={() => {
+                if (isReadOnly) return;
+                setPaymentType('advance');
+                // keep user's typed advance when switching to advance
+              }}
+              className="accent-blue-600 mt-2"
+              disabled={isReadOnly}
+            />
           </label>
           
           {/* Full Payment Option */}
-          <label className={`border rounded-lg px-4 py-3 cursor-pointer flex items-start gap-2 ${
+          <label
+            className={`border rounded-lg px-4 py-3 cursor-pointer flex items-start gap-2 ${
             paymentType === 'full' ? 'border-blue-600 bg-blue-50' : 'border-gray-200 bg-white'
-          } ${isReadOnly ? 'cursor-not-allowed opacity-60' : ''}`}>
+          } ${isReadOnly ? 'cursor-not-allowed opacity-60' : ''}`}
+            onClick={() => {
+              if (isReadOnly) return;
+              setPaymentType('full');
+              // Set advance to total so any external balance calc becomes zero
+              setAdvanceAmount(String(totalAmount));
+            }}
+          >
             <div className="flex-1">
               <div className="font-medium text-black">Full Payment</div>
               <div className="mt-2 text-lg font-semibold text-black">₹{totalAmount.toLocaleString()}</div>
             </div>
-              <input
-                type="radio"
-                name="paymentType"
-                checked={paymentType === 'full'}
-                onChange={() => {
-                  if (!isReadOnly) {
-                    setPaymentType('full');
-                    setAdvanceAmount(totalAmount.toString());
-                  }
-                }}
-                className="accent-blue-600 mt-2"
-                disabled={isReadOnly}
-              />
+            <input
+              type="radio"
+              name="paymentType"
+              checked={paymentType === 'full'}
+              onChange={() => {
+                if (isReadOnly) return;
+                setPaymentType('full');
+                // Keep model consistent across app by mirroring full amount in advance value
+                setAdvanceAmount(String(totalAmount));
+              }}
+              className="accent-blue-600 mt-2"
+              disabled={isReadOnly}
+            />
           </label>
         </div>
 
@@ -108,10 +126,10 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
             <span className='text-black'>Total Amount</span>
             <span className='text-black'>₹{totalAmount.toLocaleString()}</span>
           </div>
-            <div className="flex justify-between font-bold mt-1">
-              <span className='text-black'>Balance Amount</span>
-              <span className='text-black'>₹{paymentType === 'full' ? '0' : (totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
-            </div>
+          <div className="flex justify-between font-bold mt-1">
+            <span className='text-black'>Balance Amount</span>
+            <span className='text-black'>₹{balance.toLocaleString()}</span>
+          </div>
         </div>
 
         {/* Payment Mode */}

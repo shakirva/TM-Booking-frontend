@@ -109,7 +109,7 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
             </div>
             <div>
               <label className="block text-gray-700 mb-1 text-sm font-medium">
-                Phone 2 <span className="text-gray-400">(Optional)</span>
+                Phone 2 <span className="text-gray-400"></span>
               </label>
               <input
                 type="tel"

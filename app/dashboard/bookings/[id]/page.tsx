@@ -145,8 +145,9 @@ const bookings = [
 
 export default function BookingDetailPage() {
   const router = useRouter();
-  const params = useParams();
-  const { id } = params;
+  // Strongly type route params to access `id`
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? "";
   const booking = bookings.find((b) => b.id === id);
   const [discountAmount, setDiscountAmount] = useState(booking?.payment.discount || 0);
 
@@ -252,14 +253,15 @@ export default function BookingDetailPage() {
           <div className="bg-white rounded-xl shadow-sm p-6">
             <h2 className="text-lg font-semibold mb-4 text-gray-800">Selected Utilities</h2>
             <div className="space-y-3">
-                {booking.utilities.map((utility, index) => (
-                  <div key={index} className="flex justify-between items-center">
-                    <div>
-                      <span className="font-medium text-black">{utility.name}</span>
-                    </div>
-                    <span className="font-medium text-black">₹{utility.price}</span>
+              {booking.utilities.map((utility, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <div>
+                    <span className="font-medium text-black">{utility.name}</span>
+                    <span className="text-gray-500 ml-2">({utility.type})</span>
                   </div>
-                ))}
+                  <span className="font-medium text-black">₹{utility.price}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

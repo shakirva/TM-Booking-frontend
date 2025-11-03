@@ -20,5 +20,6 @@ export default withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
+  // Allow enabling PWA in development by setting NEXT_ENABLE_PWA_DEV=1
+  disable: process.env.NEXT_ENABLE_PWA_DEV ? false : process.env.NODE_ENV === 'development',
 })(nextConfig);
