@@ -105,11 +105,14 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 placeholder="Enter primary phone number"
                 readOnly={isReadOnly}
                 required
+                inputMode="numeric"
+                pattern="\\d{10}"
+                maxLength={10}
               />
             </div>
             <div>
               <label className="block text-gray-700 mb-1 text-sm font-medium">
-                Phone 2 <span className="text-gray-400"></span>
+                Phone 2 <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -118,6 +121,10 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 className={isReadOnly ? readOnlyClassName : inputClassName}
                 placeholder="Enter secondary phone number"
                 readOnly={isReadOnly}
+                required
+                inputMode="numeric"
+                pattern="\\d{10}"
+                maxLength={10}
               />
             </div>
           </div>

@@ -7,13 +7,33 @@ const IosInstallBanner: React.FC = () => {
   useEffect(() => {
     const isIos = () =>
       /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    
     const isInStandaloneMode = () =>
       "standalone" in window.navigator &&
       (window.navigator as Navigator & { standalone?: boolean }).standalone;
-    if (isIos() && !isInStandaloneMode()) {
-      setShowIosBanner(true);
+    
+    const wasRecentlyDismissed = () => {
+      const dismissed = localStorage.getItem('ios-install-dismissed');
+      if (!dismissed) return false;
+      const dismissedTime = parseInt(dismissed);
+      const daysSince = (Date.now() - dismissedTime) / (1000 * 60 * 60 * 24);
+      return daysSince < 7; // Show again after 7 days
+    };
+
+    if (isIos() && !isInStandaloneMode() && !wasRecentlyDismissed()) {
+      // Show after a short delay for better UX
+      const timer = setTimeout(() => {
+        setShowIosBanner(true);
+      }, 2000);
+      
+      return () => clearTimeout(timer);
     }
   }, []);
+
+  const handleDismiss = () => {
+    localStorage.setItem('ios-install-dismissed', Date.now().toString());
+    setShowIosBanner(false);
+  };
 
   if (!showIosBanner) return null;
 
@@ -21,60 +41,70 @@ const IosInstallBanner: React.FC = () => {
     <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999 }}>
       <div
         style={{
-          background: "#204DC5",
+          background: "linear-gradient(135deg, #1d4ed8, #3b82f6)",
           color: "white",
-          padding: "16px",
+          padding: "12px 16px",
           textAlign: "center",
-          fontSize: "16px",
-          boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
+          fontSize: "14px",
+          boxShadow: "0 -4px 20px rgba(29, 78, 216, 0.3)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          gap: 16,
+          justifyContent: "space-between",
+          gap: 12,
+          animation: "slideUp 0.3s ease-out"
         }}
       >
-        <span style={{ fontWeight: "bold" }}>
-          Install this app on your iPhone:
-        </span>
-        <span>
-          Tap <span style={{ fontWeight: "bold" }}>&#x2191;</span> then{' '}
-          <span style={{ fontWeight: "bold" }}>&apos;Add to Home Screen&apos;</span>
-        </span>
+        <div style={{ flex: 1, textAlign: "left" }}>
+          <div style={{ fontWeight: "600", marginBottom: "4px" }}>
+            📱 Install TM Booking
+          </div>
+          <div style={{ fontSize: "12px", opacity: 0.9 }}>
+            Tap <span style={{ fontWeight: "bold", backgroundColor: "rgba(255,255,255,0.2)", padding: "2px 6px", borderRadius: 4 }}>↗️</span> then{' '}
+            <span style={{ fontWeight: "bold" }}>&quot;Add to Home Screen&quot;</span>
+          </div>
+        </div>
         <button
           style={{
-            marginLeft: 16,
             background: "white",
-            color: "#204DC5",
+            color: "#1d4ed8",
             border: "none",
-            borderRadius: 4,
-            padding: "4px 12px",
-            fontWeight: "bold",
+            borderRadius: 8,
+            padding: "8px 16px",
+            fontWeight: "600",
             cursor: "pointer",
+            fontSize: "14px",
+            minWidth: "60px"
           }}
           onClick={() => {
-            if (window.navigator.share) {
-              window.navigator.share({ url: window.location.href });
-            }
+            // For iOS, we can only guide users to manually add to home screen
+            alert("To install:\n1. Tap the Share button (↗️) at the bottom\n2. Scroll down and tap 'Add to Home Screen'\n3. Tap 'Add' to confirm");
           }}
         >
-          Install
+          Guide
         </button>
         <button
           style={{
             marginLeft: 8,
             background: "transparent",
             color: "white",
-            border: "1px solid white",
-            borderRadius: 4,
-            padding: "4px 12px",
-            fontWeight: "bold",
+            border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: 6,
+            padding: "6px 10px",
+            fontWeight: "500",
             cursor: "pointer",
+            fontSize: "14px"
           }}
-          onClick={() => setShowIosBanner(false)}
+          onClick={handleDismiss}
         >
-          Dismiss
+          ✕
         </button>
       </div>
+      <style jsx>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 };

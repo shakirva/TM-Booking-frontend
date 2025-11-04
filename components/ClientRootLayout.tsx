@@ -1,15 +1,13 @@
 "use client";
 import { BookingProvider } from '../app/context/BookingContext';
 import { BookingDataProvider } from './booking/BookingDataProvider';
-import IosInstallBanner from '../components/IosInstallBanner';
-import InstallPwaPrompt from '../components/InstallPwaPrompt';
+import EnhancedPwaPrompt from './EnhancedPwaPrompt';
 import '../app/globals.css';
 
 export default function ClientRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <IosInstallBanner />
-      <InstallPwaPrompt />
+      <EnhancedPwaPrompt />
       <BookingProvider>
         <BookingDataProvider>
           {children}

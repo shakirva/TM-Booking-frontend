@@ -252,8 +252,12 @@ export default function BookingPage() {
         alert('Phone number must be exactly 10 digits');
         return;
       }
-      // Strict validation for Phone 2
-      if (customerPhone2.trim() && !/^\d{10}$/.test(customerPhone2)) {
+      // Phone 2 is now mandatory
+      if (!customerPhone2.trim()) {
+        alert('Please enter phone 2');
+        return;
+      }
+      if (!/^\d{10}$/.test(customerPhone2)) {
         alert('Phone 2 must be exactly 10 digits');
         return;
       }
