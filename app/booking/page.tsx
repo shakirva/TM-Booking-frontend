@@ -390,9 +390,9 @@ export default function BookingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 flex items-start justify-center overflow-auto">
       <main className="w-full max-w-2xl p-0 sm:p-4">
-        <div className="max-w-md mx-auto px-4 py-6 bg-white">
+        <div className="max-w-md mx-auto px-4 py-6 bg-white pb-24">
           <div className="flex items-center mb-4 border-b border-[#F3F4F6] pb-4 -mx-4 px-4">
             <button className="mr-2 text-xl text-black" onClick={handleBack}>
               <IoIosArrowBack />

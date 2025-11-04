@@ -33,7 +33,7 @@ export default function BookingsPage() {
   const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  // Editing flow currently disabled; keep state for read-only checks without setter to satisfy lint
+  // Editing functionality is currently disabled; keep state value only to avoid unused setter lint error
   const [editingBooking] = useState<FrontendBooking | null>(null);
   // Local state for form fields
   const [editOccasion, setEditOccasion] = useState('');
