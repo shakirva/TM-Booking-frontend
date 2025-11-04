@@ -34,10 +34,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center sm:bg-[#F8FAFF] bg-white overflow-hidden">
+  <div className="min-h-screen flex items-center justify-center sm:bg-[#F8FAFF] bg-white overflow-hidden">
      
       
-  <div className="bg-white h-screen sm:h-auto flex flex-col items-center justify-center shadow-none rounded-2xl px-6 py-8 w-full sm:max-w-xs max-w-full relative">
+  <div className="bg-white h-screen sm:h-auto flex flex-col items-center justify-center shadow-none rounded-2xl px-6 py-8 w-full max-w-md sm:max-w-sm md:max-w-md lg:max-w-lg relative">
          {/* Decorative bubble circles */}
      <div className="absolute block sm:hidden top-12 -left-28 w-48 h-48 bg-blue-100 rounded-full opacity-20 z-10" />
   <div className="absolute sm:hidden top-32 -right-28 w-48 h-48 bg-blue-100 rounded-full opacity-20 z-10 flex items-center justify-start">
@@ -53,7 +53,7 @@ export default function LoginPage() {
         </div> */}
         <h1 className="text-2xl font-medium tracking-widest text-center mb-1 text-black font-arvo">T M MAHAL</h1>
         <p className="text-gray-500 text-center mb-6 text-sm">Please sign in to continue</p>
-        <form className="w-full flex flex-col gap-3" onSubmit={handleSubmit}>
+  <form className="w-full flex flex-col gap-3" onSubmit={handleSubmit}>
           {error && <div className="text-red-500 text-sm mb-2">{error}</div>}
           <div>
             <label className="block text-gray-700 mb-2 text-sm " htmlFor="username">Username</label>
@@ -63,7 +63,7 @@ export default function LoginPage() {
                 id="username"
                 type="text"
                 placeholder="Enter your username"
-                className="bg-transparent outline-none focus:bg-transparent flex-1 text-gray-700 text-sm"
+                className="bg-transparent outline-none focus:bg-transparent flex-1 text-gray-700 text-base"
                 autoComplete="username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 id="password"
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter your password"
-                className="bg-transparent focus:bg-transparent outline-none flex-1 text-gray-700 text-sm"
+                className="bg-transparent focus:bg-transparent outline-none flex-1 text-gray-700 text-base"
                 autoComplete="current-password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}

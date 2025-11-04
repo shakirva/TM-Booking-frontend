@@ -14,6 +14,7 @@ const EnhancedPwaPrompt: React.FC = () => {
   const [isIOS, setIsIOS] = useState(false);
   const [isAndroid, setIsAndroid] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const FORCE = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_FORCE_PWA_PROMPT === '1';
 
   useEffect(() => {
     // Detect device and installation status
@@ -35,6 +36,7 @@ const EnhancedPwaPrompt: React.FC = () => {
     };
 
     const shouldShowPrompt = () => {
+      if (FORCE) return true;
       const dismissed = localStorage.getItem('pwa-prompt-dismissed');
       if (!dismissed) return true;
       
@@ -49,7 +51,7 @@ const EnhancedPwaPrompt: React.FC = () => {
     // Register service worker
     registerServiceWorker();
 
-    if (isInstalled) return;
+  if (isInstalled && !FORCE) return;
 
     // Handle beforeinstallprompt event (Android/Chrome)
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -57,9 +59,7 @@ const EnhancedPwaPrompt: React.FC = () => {
       e.preventDefault();
       setDeferredPrompt(event);
       
-      if (shouldShowPrompt()) {
-        setTimeout(() => setShowPrompt(true), 2000);
-      }
+      if (shouldShowPrompt()) setShowPrompt(true);
     };
 
     // Handle app installed event
@@ -71,13 +71,7 @@ const EnhancedPwaPrompt: React.FC = () => {
 
     // Show prompt for iOS or other devices without native support
     if ((isIOS || (!deferredPrompt && shouldShowPrompt()))) {
-      const timer = setTimeout(() => {
-        if (!isInstalled) {
-          setShowPrompt(true);
-        }
-      }, 3000);
-      
-      return () => clearTimeout(timer);
+      if (!isInstalled || FORCE) setShowPrompt(true);
     }
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -87,7 +81,7 @@ const EnhancedPwaPrompt: React.FC = () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [isInstalled, deferredPrompt, isIOS]);
+  }, [isInstalled, deferredPrompt, isIOS, FORCE]);
 
   const handleInstall = async () => {
     if (deferredPrompt) {
@@ -127,7 +121,7 @@ const EnhancedPwaPrompt: React.FC = () => {
     setShowPrompt(false);
   };
 
-  if (!showPrompt || isInstalled) return null;
+  if (!showPrompt || (isInstalled && !FORCE)) return null;
 
   const getPromptText = () => {
     if (isIOS) return "📱 Add to Home Screen for quick access!";
