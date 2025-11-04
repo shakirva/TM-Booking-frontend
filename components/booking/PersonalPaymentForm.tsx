@@ -60,7 +60,8 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
   isEditMode = false,
   isReadOnly = false
 }) => {
-  const inputClassName = "w-full rounded-lg px-3 py-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-200 text-black placeholder:text-gray-300";
+  // Ensure mobile-friendly text size to prevent iOS zoom on focus
+  const inputClassName = "w-full rounded-lg px-3 py-2 bg-gray-50 outline-none focus:ring-2 focus:ring-blue-200 text-black placeholder:text-gray-300 text-base";
   const readOnlyClassName = "w-full rounded-lg px-3 py-2 bg-gray-100 outline-none text-gray-600 cursor-not-allowed";
   const paymentInputClassName = "w-full border rounded-md px-2 py-3 bg-white text-gray-700 text-sm outline-none focus:ring-2 focus:ring-blue-200 border border-[#E5E7EB]";
   const paymentReadOnlyClassName = "w-full border rounded-md px-2 py-3 bg-gray-100 text-gray-600 text-sm cursor-not-allowed border border-gray-300";
@@ -106,7 +107,8 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 readOnly={isReadOnly}
                 required
                 inputMode="numeric"
-                pattern="\\d{10}"
+                autoComplete="tel"
+                pattern="[0-9]{10}"
                 maxLength={10}
               />
             </div>
@@ -123,7 +125,8 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 readOnly={isReadOnly}
                 required
                 inputMode="numeric"
-                pattern="\\d{10}"
+                autoComplete="tel"
+                pattern="[0-9]{10}"
                 maxLength={10}
               />
             </div>
