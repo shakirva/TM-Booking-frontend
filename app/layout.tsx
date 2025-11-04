@@ -8,8 +8,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <meta name="theme-color" content="#1d4ed8" />
         <link rel="manifest" href="/manifest.json" />
-        {/* iOS Home Screen icon (Apple ignores manifest icons) */}
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/tm.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         {/* Apple PWA meta tags for iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />

@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname() ?? "";
+  // Guard against null during prerender/initial render
+  const pathname = usePathname() || "";
   const segments = pathname.split("/").filter(Boolean).slice(1); // skip 'dashboard'
 
   // Get profile info from localStorage (set by settings page)

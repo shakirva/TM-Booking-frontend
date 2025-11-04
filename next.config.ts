@@ -20,7 +20,5 @@ export default withPWA({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  // Always enable PWA so install prompt can show in development too
-  // If you need to turn it off locally, set NEXT_DISABLE_PWA=1
-  disable: process.env.NEXT_DISABLE_PWA === '1' ? true : false,
+  disable: process.env.NODE_ENV === 'development',
 })(nextConfig);

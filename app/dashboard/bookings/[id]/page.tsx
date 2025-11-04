@@ -145,9 +145,9 @@ const bookings = [
 
 export default function BookingDetailPage() {
   const router = useRouter();
-  // Strongly type route params to access `id`
+  // Type the route params so `id` is known to exist and is a string
   const params = useParams<{ id: string }>();
-  const id = params?.id ?? "";
+  const id = params?.id ?? '';
   const booking = bookings.find((b) => b.id === id);
   const [discountAmount, setDiscountAmount] = useState(booking?.payment.discount || 0);
 

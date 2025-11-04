@@ -12,29 +12,14 @@ const InstallPwaPrompt: React.FC = () => {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
-    // Don't show if already installed or running standalone
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as Navigator & { standalone?: boolean }).standalone;
-
-    const onBeforeInstallPrompt = (e: Event) => {
+    const handler = (e: Event) => {
       const event = e as BeforeInstallPromptEvent;
       event.preventDefault();
-      if (isStandalone) return;
       setDeferredPrompt(event);
       setShowPrompt(true);
     };
-
-    const onAppInstalled = () => {
-      setShowPrompt(false);
-      setDeferredPrompt(null);
-    };
-
-    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-    window.addEventListener('appinstalled', onAppInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', onAppInstalled);
-    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const handleInstallClick = async () => {

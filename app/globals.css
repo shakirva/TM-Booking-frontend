@@ -11,9 +11,7 @@
   font-family: "Arvo", serif;
 }
 
-/* NOTE: Tailwind v4 provides an experimental `@theme` at-rule which some editors flag as unknown.
-   To avoid false diagnostics in VS Code's CSS language server, we inline equivalent CSS variables. */
-:root {
+@theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
