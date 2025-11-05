@@ -87,7 +87,7 @@ export default function BookingConfirmationPage() {
         await navigator.share({
           files: [file],
           title: "Booking Confirmation",
-          text: "Here is my booking confirmation.",
+          text: "Your Booking confirmed.",
         });
       } else {
         const url = URL.createObjectURL(blob);

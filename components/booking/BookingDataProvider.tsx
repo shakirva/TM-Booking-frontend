@@ -151,9 +151,40 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     setCurrentBooking(null);
   };
 
-  // Fetch bookings on mount
+  // Fetch bookings on mount; if token isn't ready yet (immediately after login),
+  // retry a few times until it is available to avoid the need for manual refreshes.
   useEffect(() => {
-    fetchBookings();
+    let cancelled = false;
+    const token = getToken();
+    if (token) {
+      fetchBookings();
+    } else {
+      // Retry up to 5 times within ~5 seconds
+      let attempts = 0;
+      const interval = setInterval(() => {
+        if (cancelled) return clearInterval(interval);
+        const t = getToken();
+        attempts += 1;
+        if (t) {
+          clearInterval(interval);
+          fetchBookings();
+        } else if (attempts >= 5) {
+          clearInterval(interval);
+        }
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+    return () => { cancelled = true; };
+  }, []);
+
+  // Refresh when window/tab gains focus (keeps dashboard and calendar fresh)
+  useEffect(() => {
+    const onFocus = () => {
+      const token = getToken();
+      if (token) fetchBookings();
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
   // Populate form from existing booking

@@ -74,7 +74,9 @@ export default function BookingPage() {
       }
     }
     fetchSlots();
-  }, []);
+    // Also ensure bookings are fetched on first visit after login
+    fetchBookings();
+  }, [fetchBookings]);
 
   const [occasion, setOccasion] = useState(booking?.slot?.occasion ?? '');
   // utility removed
@@ -282,7 +284,15 @@ export default function BookingPage() {
       // Since personal and payment are now combined, proceed to confirmation
       // Validate payment details
       if (paymentType === 'advance') {
-        const advance = parseInt(advanceAmount);
+        const advance = parseInt(advanceAmount, 10);
+        if (Number.isNaN(advance)) {
+          alert('Please enter advance amount');
+          return;
+        }
+        if (advance < minAdvance) {
+          alert(`Advance amount must be at least ₹${minAdvance.toLocaleString()}`);
+          return;
+        }
         if (advance > slotPrice) {
           alert('Advance amount cannot exceed total amount');
           return;

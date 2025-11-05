@@ -54,7 +54,7 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
   paymentMode,
   setPaymentMode,
   totalAmount,
-  // minAdvance removed
+  minAdvance,
   
   // Edit mode props
   isEditMode = false,
@@ -202,14 +202,19 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 <div className="font-medium text-black">Advance Payment</div>
                 <input
                   type="number"
-                  min={0}
-                  placeholder="Enter Amount"
+                  min={typeof minAdvance === 'number' ? minAdvance : 10000}
+                  step={1}
+                  placeholder={typeof minAdvance === 'number' ? `Minimum ₹${minAdvance.toLocaleString()}` : 'Minimum ₹10,000'}
                   value={advanceAmount}
                   onChange={e => setAdvanceAmount(e.target.value)}
                   className={isReadOnly ? paymentReadOnlyClassName : paymentInputClassName}
                   disabled={paymentType !== 'advance' || isReadOnly}
+                  required={paymentType === 'advance'}
+                  inputMode="numeric"
                 />
-                {/* Min advance removed */}
+                {!isReadOnly && paymentType === 'advance' && (
+                  <div className="text-xs text-gray-500 mt-2">Minimum advance is <span className="font-semibold">₹{(typeof minAdvance === 'number' ? minAdvance : 10000).toLocaleString()}</span></div>
+                )}
               </div>
               <input
                 type="radio"
