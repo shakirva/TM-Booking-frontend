@@ -140,7 +140,7 @@ export default function BookingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+  <div className="max-w-7xl mx-auto space-y-6 pb-24">
       {/* Edit Booking Modal */}
       <Modal
         isOpen={editModalOpen}
@@ -278,26 +278,87 @@ export default function BookingsPage() {
         />
       )}
       {/* Card */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="font-semibold text-lg text-gray-800">Bookings</div>
-          <button className="bg-white border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            {/* Download button removed */}
+          <button className="hidden md:inline bg-white border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            {/* Reserved for future actions */}
           </button>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile card list */}
+        <div className="space-y-3 md:hidden">
+          {bookings.map(b => (
+            <div
+              key={b.id}
+              className="border border-gray-200 rounded-xl p-3 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:bg-gray-50 transition cursor-pointer"
+              onClick={() => router.push(`/dashboard/bookings/${b.id}`)}
+            >
+              {/* Header: ID + payment badge */}
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-semibold text-black">#{b.id}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 capitalize">
+                  {b.payment_mode || '-'}
+                </span>
+              </div>
+              {/* Name and amount */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-sm text-gray-900 font-medium truncate">{b.name}</div>
+                  <div className="text-[12px] text-gray-500 truncate">{b.occasion_type || '-'}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">Amount</div>
+                  <div className="text-sm font-semibold text-black">
+                    {(() => {
+                      const n = Number(b.advance_amount);
+                      return Number.isFinite(n) && n > 0 ? `₹${n.toLocaleString()}` : '-';
+                    })()}
+                  </div>
+                </div>
+              </div>
+              {/* Date row */}
+              <div className="flex items-center justify-between text-[12px] mt-2">
+                <span className="text-gray-500">Date</span>
+                <span className="text-gray-700">{b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+              </div>
+              {/* Actions */}
+              <div className="flex gap-2 mt-3">
+                <button
+                  className="flex-1 text-green-700 hover:text-green-800 font-semibold text-xs border border-green-200 rounded-lg px-2 py-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setViewingBooking(mapToFrontendBooking(b));
+                    setShowDetailsModal(true);
+                  }}
+                >View</button>
+                <button
+                  className="text-red-600 hover:text-red-700 font-semibold text-xs border border-red-200 rounded-lg px-3 py-2"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const token = getToken();
+                    if (!token) return;
+                    await deleteBooking(String(b.id), token);
+                    setBookings(bookings.filter(x => x.id !== b.id));
+                  }}
+                >Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table */}
+        <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="bg-[#F8FAFF] text-gray-400 text-left">
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
-                {/* <th className="py-3 px-4 font-medium">Utility Type</th> */}
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>
-                  <th className="py-3 px-4 font-medium">Actions</th>
-                  {/* <th className="py-3 px-4 font-medium"></th> */}
+                <th className="py-3 px-4 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
@@ -310,7 +371,6 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.id}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.name}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
-                  {/* utility_type column removed */}
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">
@@ -321,14 +381,6 @@ export default function BookingsPage() {
                         : '-'}
                   </td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB] flex gap-2">
-                    {/* <button
-                      className="text-blue-500 hover:text-blue-700 font-bold text-sm border border-blue-100 rounded px-2 py-1"
-                      onClick={e => {
-                        e.stopPropagation();
-                        setEditingBooking(mapToFrontendBooking(booking));
-                        setEditModalOpen(true);
-                      }}
-                    >Edit</button> */}
                     <button
                       className="text-green-600 hover:text-green-800 font-bold text-sm border border-green-100 rounded px-2 py-1"
                       onClick={e => {

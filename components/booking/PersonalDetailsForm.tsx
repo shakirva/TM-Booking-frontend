@@ -79,20 +79,20 @@ const PersonalDetailsForm: React.FC<PersonalDetailsFormProps> = ({
                 value={customerPhone}
                 onChange={e => {
                   const val = e.target.value;
-                  if (/^\d{0,10}$/.test(val)) {
+                  if (/^\d{0,11}$/.test(val)) {
                     setCustomerPhone(val);
-                    if (val.length === 10) {
+                    if (val.length === 11) {
                       setPhoneError('');
                     } else {
-                      setPhoneError('Phone number must be exactly 10 digits');
+                      setPhoneError('Phone number must be exactly 11 digits');
                     }
                   }
                 }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
-                placeholder="Enter primary phone number"
+                placeholder="Enter primary phone number (11 digits)"
                 readOnly={isReadOnly}
                 required
-                maxLength={10}
+                maxLength={11}
               />
               {phoneError && <div className="text-red-500 text-xs mt-1">{phoneError}</div>}
             </div>

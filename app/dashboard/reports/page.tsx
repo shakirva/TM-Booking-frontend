@@ -154,7 +154,7 @@ export default function ReportsPage() {
       // removed duplicate/stray block
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-6 shadow-sm flex flex-col justify-center items-center">
           <div className="font-semibold text-lg mb-4 text-gray-800">Booking Overview</div>

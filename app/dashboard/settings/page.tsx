@@ -80,9 +80,9 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto px-4">
       <div className="font-semibold text-xl mb-6 text-black">Profile Settings</div>
-      <div className="bg-white rounded-xl shadow-sm p-8 flex flex-col items-center">
+      <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 flex flex-col items-center">
         {/* Profile Photo */}
         <div className="relative mb-2">
           <Image

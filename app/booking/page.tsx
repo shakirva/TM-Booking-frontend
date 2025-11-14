@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { getToken, removeToken } from '@/lib/auth';
 import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
@@ -14,6 +14,8 @@ import BookingDetailsModal from './BookingDetailsModal';
 
 export default function BookingPage() {
   const router = useRouter();
+  // Ref to the page heading so we can scroll to it when step changes
+  const headingRef = useRef<HTMLHeadingElement | null>(null);
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -62,6 +64,16 @@ export default function BookingPage() {
       setDate(new Date(booking.slot.date));
     }
   }, [booking?.slot?.date]);
+
+  // When we navigate to Personal & Payment step, scroll the page to the heading
+  useEffect(() => {
+    if (currentStep === 'personal-payment') {
+      // Give the DOM a tick to render then scroll
+      requestAnimationFrame(() => {
+        headingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  }, [currentStep]);
 
   // Fetch all slots from backend on mount
   useEffect(() => {
@@ -129,6 +141,16 @@ export default function BookingPage() {
     return date >= today && !isDateBooked(date);
   };
 
+  // Helper to compare a calendar day with current selected date
+  const isSameDay = (a: Date, b: Date | null) => {
+    if (!b) return false;
+    return (
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate()
+    );
+  };
+
   // Custom tile content for calendar
   const tileContent = ({ date, view }: { date: Date; view: string }) => {
     if (view === 'month') {
@@ -148,18 +170,18 @@ export default function BookingPage() {
   };
 
   // Custom tile className for calendar
-  const tileClassName = ({ date, view }: { date: Date; view: string }) => {
-    if (view === 'month') {
-      const booked = isDateBooked(date);
-      if (booked) {
-        console.log('[DEBUG] tileClassName: Booked date', date);
-        // Use custom class to style booked dates (red background)
-        return 'booked-date';
-      } else if (isDateAvailable(date)) {
-        return 'available-date';
-      }
+  const tileClassName = ({ date: day, view }: { date: Date; view: string }) => {
+    if (view !== 'month') return '';
+    const classes: string[] = [];
+    if (isSameDay(day, date)) {
+      // Always force selected-date class so blue stays regardless of booked/available
+      classes.push('selected-date');
+    } else if (isDateBooked(day)) {
+      classes.push('booked-date');
+    } else if (isDateAvailable(day)) {
+      classes.push('available-date');
     }
-    return '';
+    return classes.join(' ');
   };
 
   // Disable only past dates, allow booked dates to be selectable
@@ -250,19 +272,11 @@ export default function BookingPage() {
         alert('Please enter customer phone');
         return;
       }
-      if (!/^\d{10}$/.test(customerPhone)) {
-        alert('Phone number must be exactly 10 digits');
-        return;
-      }
-      // Phone 2 is now mandatory
-      if (!customerPhone2.trim()) {
-        alert('Please enter phone 2');
-        return;
-      }
-      if (!/^\d{10}$/.test(customerPhone2)) {
-        alert('Phone 2 must be exactly 10 digits');
-        return;
-      }
+        if (!/^\d{11}$/.test(customerPhone)) {
+          alert('Phone number must be exactly 11 digits');
+          return;
+        }
+        // Phone 2 is optional now (no validation required)
       if (!address.trim()) {
         alert('Please enter address');
         return;
@@ -411,7 +425,7 @@ export default function BookingPage() {
             <button className="mr-2 text-xl text-black" onClick={handleBack}>
               <IoIosArrowBack />
             </button>
-            <h2 className="flex-1 text-center font-semibold text-lg text-black">
+            <h2 ref={headingRef} className="flex-1 text-center font-semibold text-lg text-black">
               {getStepTitle()}
             </h2>
             <button
@@ -598,9 +612,9 @@ export default function BookingPage() {
       {/* Professional Edit Modal - moved outside main <form> */}
       {isEditMode && editingBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-          <div className="bg-white rounded-xl shadow-lg max-w-lg w-full p-8">
-            <h3 className="font-bold text-2xl mb-6 text-center text-blue-700">Edit Booking</h3>
-            <form className="space-y-6" onSubmit={async (e) => {
+          <div className="bg-white rounded-xl shadow-lg w-full max-w-3xl p-6 sm:p-8 max-h-[88vh] overflow-y-auto">
+            <h3 className="font-bold text-xl sm:text-2xl mb-4 sm:mb-6 text-center text-blue-700">Edit Booking</h3>
+            <form className="space-y-5" onSubmit={async (e) => {
               e.preventDefault();
               // Only require customer name and phone
               if (!editingBooking.customerName || !editingBooking.customerPhone) {
@@ -650,7 +664,7 @@ export default function BookingPage() {
                 setSubmitError('Failed to update booking.');
               }
             }}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Customer Name</label>
                   <input type="text" value={editingBooking.customerName} onChange={e => setEditingBooking({ ...editingBooking, customerName: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
@@ -660,7 +674,7 @@ export default function BookingPage() {
                   <input type="text" value={editingBooking.customerPhone} onChange={e => setEditingBooking({ ...editingBooking, customerPhone: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Occasion</label>
                   <select value={editingBooking.occasion} onChange={e => setEditingBooking({ ...editingBooking, occasion: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
@@ -678,7 +692,7 @@ export default function BookingPage() {
                   <input type="text" value={editingBooking.address} onChange={e => setEditingBooking({ ...editingBooking, address: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" />
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Advance Amount</label>
                   <input type="number" value={editingBooking.advanceAmount} onChange={e => setEditingBooking({ ...editingBooking, advanceAmount: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" />
@@ -691,7 +705,7 @@ export default function BookingPage() {
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Payment Mode</label>
                   <select value={editingBooking.paymentMode} onChange={e => setEditingBooking({ ...editingBooking, paymentMode: e.target.value as 'bank' | 'cash' | 'upi' })} className="border rounded px-3 py-2 w-full text-black bg-white">
@@ -702,7 +716,46 @@ export default function BookingPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Date</label>
-                  <input type="date" value={editingBooking.date} onChange={e => setEditingBooking({ ...editingBooking, date: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" required />
+                  {/* Replace native input with Calendar so booked dates show red, same as main booking calendar */}
+                  <div className="calendar-container edit-calendar border rounded-lg p-2">
+                    <Calendar
+                      onChange={(val: unknown) => {
+                        if (val instanceof Date) {
+                          const y = val.getFullYear();
+                          const m = String(val.getMonth() + 1).padStart(2, '0');
+                          const d = String(val.getDate()).padStart(2, '0');
+                          setEditingBooking({
+                            ...editingBooking,
+                            date: `${y}-${m}-${d}`
+                          });
+                        }
+                      }}
+                      value={(() => {
+                        // Parse editingBooking.date (yyyy-mm-dd) to Date
+                        const parts = (editingBooking.date || '').split('-');
+                        if (parts.length === 3) {
+                          const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+                          return dt;
+                        }
+                        return new Date();
+                      })()}
+                      tileClassName={tileClassName}
+                      tileDisabled={tileDisabled}
+                      minDate={today}
+                      locale="en-US"
+                      className="w-full"
+                    />
+                    <div className="calendar-legend mt-2">
+                      <div className="calendar-legend-item">
+                        <div className="calendar-legend-dot available"></div>
+                        <span>Available</span>
+                      </div>
+                      <div className="calendar-legend-item">
+                        <div className="calendar-legend-dot booked"></div>
+                        <span>Booked</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
               <div>
@@ -718,8 +771,8 @@ export default function BookingPage() {
                 <label className="block text-sm font-semibold text-black mb-2">Notes</label>
                 <textarea value={editingBooking.notes} onChange={e => setEditingBooking({ ...editingBooking, notes: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" rows={2} />
               </div>
-              <div className="flex gap-4 mt-8 justify-end">
-                <button type="button" className="bg-gray-300 text-black py-2 px-5 rounded hover:bg-gray-400 font-semibold" onClick={() => { setIsEditMode(false); setEditingBooking(null); }}>Cancel</button>
+              <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 sm:justify-end">
+                <button type="button" className="bg-gray-200 text-black py-2 px-5 rounded hover:bg-gray-300 font-semibold" onClick={() => { setIsEditMode(false); setEditingBooking(null); }}>Cancel</button>
                 <button type="submit" className="bg-blue-600 text-white py-2 px-5 rounded hover:bg-blue-700 font-semibold">Update Booking</button>
               </div>
               {submitError && <div className="text-red-500 text-sm mt-4 text-center">{submitError}</div>}

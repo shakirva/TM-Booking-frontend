@@ -104,9 +104,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
 
 
 
-              {/* Phone removed */}
-
-                  setUsers([]);
+        {/* Phone removed */}
             </div>
           </div>
 
@@ -145,7 +143,7 @@ function AddUserModal({ isOpen, onClose, onUserAdded }: { isOpen: boolean; onClo
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => handleInputChange("password", e.target.value)}
-                    className={`w-full pl-4 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                    className={`w-full pl-4 pr-12 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black placeholder:text-gray-400 ${
                       errors.password ? "border-red-500" : "border-gray-300"
                     }`}
                     placeholder="Enter password"
@@ -222,7 +220,7 @@ export default function UsersPage() {
   }, []);
 
   return (
-    <div className="space-y-6">
+  <div className="max-w-7xl mx-auto space-y-6">
       {/* Controls */}
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
@@ -237,8 +235,39 @@ export default function UsersPage() {
           + Add New User
         </button>
       </div>
-      {/* Users Table Card */}
-      <div className="bg-white rounded-xl shadow-sm p-0 overflow-hidden">
+      {/* Users List - Mobile cards */}
+      <div className="md:hidden space-y-3">
+        {users.map((user, idx) => (
+          <div key={user.id || idx} className="bg-white rounded-lg border border-gray-200 p-3">
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-black">{(user as User).username || (user as User).name}</div>
+              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs font-semibold">{(user as User).role}</span>
+            </div>
+            <div className="text-xs text-gray-500 mt-1">Joined: {(user as User).created_at ? new Date((user as User).created_at as string).toLocaleDateString() : '-'}</div>
+            <div className="flex gap-2 mt-2">
+              <button
+                className="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-100 rounded px-2 py-1"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!user.id) return;
+                  if (!window.confirm('Are you sure you want to delete this user?')) return;
+                  const token = getToken();
+                  if (!token) return;
+                  try {
+                    await import('@/lib/api').then(mod => mod.deleteUser(String(user.id), token));
+                    setUsers(users.filter(u => u.id !== user.id));
+                  } catch {
+                    alert('Failed to delete user.');
+                  }
+                }}
+              >Delete</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Users Table - Desktop */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm p-0 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#F8FAFF] text-gray-400 text-left">

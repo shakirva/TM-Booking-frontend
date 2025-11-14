@@ -381,3 +381,12 @@ html, body {
 input, select, textarea, button {
   font-size: 16px;
 }
+
+/* Utility: hide scrollbar for overflow containers */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}

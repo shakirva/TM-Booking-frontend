@@ -56,9 +56,9 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="max-w-7xl mx-auto space-y-8">
       {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Bookings */}
         <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
           <div className="flex items-end justify-between  w-full gap-2">
@@ -143,18 +143,60 @@ export default function DashboardPage() {
         </button>
       </div> */}
       {/* Main Content Grid */}
-     
-        {/* Recent Bookings Table */}
-        <div className="col-span-2 bg-white rounded-xl shadow-sm">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Recent Bookings */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm">
           <div className="font-semibold text-lg text-gray-800 p-4 border-b border-[#E5E7EB]">Recent Bookings</div>
-          <div className="overflow-x-auto">
+          {/* Mobile cards */}
+          <div className="p-4 space-y-3 md:hidden">
+            {bookings.length === 0 && (
+              <div className="text-gray-400 text-center">No recent bookings</div>
+            )}
+            {bookings.map((b) => (
+              <div key={String(b.id)} className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold text-black">#{String(b.id)}</div>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{b.payment_mode ?? '-'}</span>
+                </div>
+                <div className="text-sm text-gray-600 mt-1">{b.name ?? '-'}</div>
+                <div className="text-sm text-gray-500">{b.occasion_type ?? '-'}</div>
+                <div className="flex items-center justify-between mt-2 text-sm">
+                  <span className="text-gray-500">Advance</span>
+                  <span className="font-medium text-black">{b.advance_amount ?? '-'}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-500">
+                  <span>Date</span>
+                  <span>{b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    className="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-100 rounded px-2 py-1"
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!b.id) return;
+                      if (!window.confirm('Delete this booking?')) return;
+                      const token = getToken();
+                      if (!token) return;
+                      try {
+                        await import('@/lib/api').then(mod => mod.deleteBooking(String(b.id), token));
+                        setBookings(bookings.filter(x => x.id !== b.id));
+                      } catch {
+                        alert('Failed to delete booking.');
+                      }
+                    }}
+                  >Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Desktop table */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full text-sm border-separate border-spacing-0">
               <thead>
                 <tr className="bg-[#F8FAFF] text-gray-400 text-left">
                   <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                   <th className="py-3 px-4 font-medium">Customer</th>
                   <th className="py-3 px-4 font-medium">Occasion Type</th>
-                  {/* Utility Type column removed */}
                   <th className="py-3 px-4 font-medium">Payment Mode</th>
                   <th className="py-3 px-4 font-medium">Advance Amount</th>
                   <th className="py-3 px-4 font-medium">Booked Date</th>
@@ -167,11 +209,10 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{String((booking as BookingDisplay).id ?? '')}</td>
                     <td className="py-3 px-4 font-medium border-b border-[#E5E7EB]">{(booking as BookingDisplay).name ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
-                    {/* Utility Type cell removed */}
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? new Date((booking as BookingDisplay).date as string).toLocaleDateString() : '-'}</td>
-                    <td className="py-3 px-4 text-xl border-b border-[#E5E7EB] flex gap-2">
+                    <td className="py-3 px-4 text-xl border-b border-[#E5E7EB]">
                       <button
                         className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
                         onClick={async (e) => {
@@ -195,6 +236,7 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
+
         {/* Upcoming Events */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="font-semibold text-lg mb-4 text-gray-800">Upcoming Events</div>
@@ -222,6 +264,7 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
+      </div>
     </div>
   );
 } 

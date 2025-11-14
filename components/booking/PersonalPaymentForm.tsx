@@ -101,20 +101,26 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
               <input
                 type="tel"
                 value={customerPhone}
-                onChange={e => setCustomerPhone(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  // allow only digits up to 11
+                  if (/^\d{0,11}$/.test(val)) {
+                    setCustomerPhone(val);
+                  }
+                }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
-                placeholder="Enter primary phone number"
+                placeholder="Enter primary phone number (11 digits)"
                 readOnly={isReadOnly}
                 required
                 inputMode="numeric"
                 autoComplete="tel"
-                pattern="[0-9]{10}"
-                maxLength={10}
+                pattern="[0-9]{11}"
+                maxLength={11}
               />
             </div>
             <div>
               <label className="block text-gray-700 mb-1 text-sm font-medium">
-                Phone 2 <span className="text-red-500">*</span>
+                Phone 2 <span className="text-gray-400">(Optional)</span>
               </label>
               <input
                 type="tel"
@@ -123,7 +129,7 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 className={isReadOnly ? readOnlyClassName : inputClassName}
                 placeholder="Enter secondary phone number"
                 readOnly={isReadOnly}
-                required
+                
                 inputMode="numeric"
                 autoComplete="tel"
                 pattern="[0-9]{10}"

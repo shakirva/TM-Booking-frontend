@@ -1,6 +1,7 @@
 "use client";
 import React, { useRef } from "react";
 import { useRouter } from 'next/navigation';
+import { removeToken } from '@/lib/auth';
 import { useBooking } from "../../context/BookingContext";
 import { FaHome, FaShareAlt } from 'react-icons/fa';
 import html2canvas from "html2canvas";
@@ -105,6 +106,18 @@ export default function BookingConfirmationPage() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-green-50 to-white px-4 py-8">
+      {/* Top actions: Logout to mirror other pages */}
+      <div className="w-full max-w-md -mt-2 mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => { removeToken(); router.push('/auth/login'); }}
+          className="px-3 py-1.5 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+          aria-label="Logout"
+          title="Logout"
+        >
+          Logout
+        </button>
+      </div>
       <style>{`
         .html2canvas-reset, .html2canvas-reset * {
           color:rgb(0, 0, 0) !important;
