@@ -272,8 +272,9 @@ export default function BookingPage() {
         alert('Please enter customer phone');
         return;
       }
-        if (!/^\d{11}$/.test(customerPhone)) {
-          alert('Phone number must be exactly 11 digits');
+        // Phone 1 should be exactly 10 digits (mobile only)
+        if (!/^\d{10}$/.test(customerPhone)) {
+          alert('Phone number must be exactly 10 digits');
           return;
         }
         // Phone 2 is optional now (no validation required)

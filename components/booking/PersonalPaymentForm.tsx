@@ -103,19 +103,19 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 value={customerPhone}
                 onChange={e => {
                   const val = e.target.value;
-                  // allow only digits up to 11
-                  if (/^\d{0,11}$/.test(val)) {
+                  // allow only digits up to 10 (mobile only)
+                  if (/^\d{0,10}$/.test(val)) {
                     setCustomerPhone(val);
                   }
                 }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
-                placeholder="Enter primary phone number (11 digits)"
+                placeholder="Enter primary phone number (10 digits)"
                 readOnly={isReadOnly}
                 required
                 inputMode="numeric"
                 autoComplete="tel"
-                pattern="[0-9]{11}"
-                maxLength={11}
+                pattern="[0-9]{10}"
+                maxLength={10}
               />
             </div>
             <div>
@@ -125,15 +125,21 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
               <input
                 type="tel"
                 value={customerPhone2}
-                onChange={e => setCustomerPhone2(e.target.value)}
+                onChange={e => {
+                  const val = e.target.value;
+                  // allow only digits up to 11 (supports landline)
+                  if (/^\d{0,11}$/.test(val)) {
+                    setCustomerPhone2(val);
+                  }
+                }}
                 className={isReadOnly ? readOnlyClassName : inputClassName}
-                placeholder="Enter secondary phone number"
+                placeholder="Enter secondary phone number (10 or 11 digits)"
                 readOnly={isReadOnly}
                 
                 inputMode="numeric"
                 autoComplete="tel"
-                pattern="[0-9]{10}"
-                maxLength={10}
+                pattern="[0-9]{10,11}"
+                maxLength={11}
               />
             </div>
           </div>
