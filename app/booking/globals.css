@@ -2,7 +2,6 @@
   background: #fecaca !important; /* Tailwind red-200 */
   color: #b91c1c !important;      /* Tailwind red-800 */
   font-weight: bold;
-  border-radius: 9999px;
 }
 /* Selected slot button style for better readability */
 .selected-slot {
@@ -45,6 +44,36 @@
 .calendar-legend-dot { width: 10px; height: 10px; border-radius: 9999px; }
 .calendar-legend-dot.available { background: #10b981; }
 .calendar-legend-dot.booked { background: #ef4444; }
+/* New legend dots for partial vs full booking */
+.calendar-legend-dot.booked-full { background: #ef4444; }
+.calendar-legend-dot.booked-part { background: #facc15; }
+
+/* New color classes for calendar tiles */
+.booked-full-date {
+  background: #ef4444 !important; /* red for fully booked (two slots) */
+  color: #fff !important;
+  font-weight: 600;
+}
+.booked-part-date {
+  background: #facc15 !important; /* yellow for partially booked (one slot) */
+  color: #78350f !important;
+  font-weight: 600;
+}
+
+/* Preserve selection styling when a booked tile is selected */
+.booked-full-date.selected-date,
+.booked-part-date.selected-date {
+  background-color: #204DC5 !important;
+  color: #fff !important;
+  box-shadow: 0 4px 6px -1px rgba(32,77,197,.35) !important;
+}
+
+/* Available date styling (no bookings) */
+.available-date {
+  background: #d1fae5 !important; /* Tailwind green-100 */
+  color: #065f46 !important; /* Tailwind green-800 */
+  font-weight: 500;
+}
 
 /* Selected day highlight (applies to all calendars) */
 .react-calendar__tile--active,
@@ -52,7 +81,6 @@
 .react-calendar__tile--active.selected-date {
   color: #fff !important;
   background-color: #204DC5 !important; /* simple solid blue */
-  border-radius: 9999px !important;
   font-weight: 600 !important;
   box-shadow: 0 4px 6px -1px rgba(32,77,197,.35) !important;
 }
@@ -73,7 +101,6 @@
 .selected-date {
   color: #fff !important;
   background-color: #204DC5 !important;
-  border-radius: 9999px !important;
   font-weight: 600 !important;
   box-shadow: 0 4px 6px -1px rgba(32,77,197,.35) !important;
 }

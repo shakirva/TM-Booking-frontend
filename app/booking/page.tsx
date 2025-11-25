@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
+// Ensure segment-specific styles are loaded
+import './globals.css';
 import { getToken, removeToken } from '@/lib/auth';
 import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
@@ -134,6 +136,13 @@ export default function BookingPage() {
     return bookings.length > 0;
   };
 
+  // Get booking count for a date (used to differentiate partial/full booking)
+  const getBookingCountForDate = (date: Date) => {
+    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dateString = formatDateForComparison(localDate);
+    return getBookingsByDate(dateString)?.length || 0;
+  };
+
   // Function to check if a date is available (not booked and not in the past)
   const isDateAvailable = (date: Date) => {
     const today = new Date();
@@ -176,10 +185,15 @@ export default function BookingPage() {
     if (isSameDay(day, date)) {
       // Always force selected-date class so blue stays regardless of booked/available
       classes.push('selected-date');
-    } else if (isDateBooked(day)) {
-      classes.push('booked-date');
-    } else if (isDateAvailable(day)) {
-      classes.push('available-date');
+    } else {
+      const count = getBookingCountForDate(day);
+      if (count >= 2) {
+        classes.push('booked-full-date');
+      } else if (count === 1) {
+        classes.push('booked-part-date');
+      } else if (isDateAvailable(day)) {
+        classes.push('available-date');
+      }
     }
     return classes.join(' ');
   };
@@ -472,8 +486,12 @@ export default function BookingPage() {
                       <span>Available</span>
                     </div>
                     <div className="calendar-legend-item">
-                      <div className="calendar-legend-dot booked"></div>
-                      <span>Booked</span>
+                      <div className="calendar-legend-dot booked-part"></div>
+                      <span>1 Slot Booked</span>
+                    </div>
+                    <div className="calendar-legend-item">
+                      <div className="calendar-legend-dot booked-full"></div>
+                      <span>2 Slots Booked</span>
                     </div>
                   </div>
                 </div>
@@ -752,8 +770,12 @@ export default function BookingPage() {
                         <span>Available</span>
                       </div>
                       <div className="calendar-legend-item">
-                        <div className="calendar-legend-dot booked"></div>
-                        <span>Booked</span>
+                        <div className="calendar-legend-dot booked-part"></div>
+                        <span>1 Slot Booked</span>
+                      </div>
+                      <div className="calendar-legend-item">
+                        <div className="calendar-legend-dot booked-full"></div>
+                        <span>2 Slots Booked</span>
                       </div>
                     </div>
                   </div>
