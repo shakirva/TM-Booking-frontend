@@ -4,6 +4,7 @@ import { MdOutlineCalendarMonth } from "react-icons/md";
 import { FaRegUser } from "react-icons/fa6";
 import { getDashboardSummary, getRequests } from '@/lib/api';
 import { getToken } from '@/lib/auth';
+import { formatDateDMY } from '@/lib/date';
 
 
 export default function DashboardPage() {
@@ -40,13 +41,32 @@ export default function DashboardPage() {
           advance_amount: b.advance_amount ?? '-',
         }));
         setBookings(mappedBookings.slice(-5).reverse()); // show 5 most recent
-        // For upcoming events, show all bookings with a future date, sorted by nearest date
-        const now = new Date();
-        const upcomingEvents = mappedBookings
-          .filter((b: BookingDisplay) => b.date && new Date(b.date) > now)
-          .sort((a: BookingDisplay, b: BookingDisplay) => new Date(a.date!).getTime() - new Date(b.date!).getTime())
-          .slice(0, 3);
-        setUpcoming(upcomingEvents);
+        // Upcoming events logic (improved): show up to 7 upcoming (today or future) events.
+        // If fewer than 7 future/today events exist, backfill with recent past events, then placeholders.
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const datedBookings = mappedBookings.filter(b => b.date).map(b => ({...b, _dateObj: b.date ? new Date(b.date!) : null }));
+        const futureOrToday = datedBookings
+          .filter(b => b._dateObj && b._dateObj.getTime() >= today.getTime())
+          .sort((a,b) => (a._dateObj!.getTime() - b._dateObj!.getTime())); // ascending
+        let upcomingList: BookingDisplay[] = futureOrToday.slice(0,7);
+        if (upcomingList.length < 7) {
+          const past = datedBookings
+            .filter(b => b._dateObj && b._dateObj.getTime() < today.getTime())
+            .sort((a,b) => (b._dateObj!.getTime() - a._dateObj!.getTime())); // most recent past first
+          const needed = 7 - upcomingList.length;
+            upcomingList = [...upcomingList, ...past.slice(0, needed)];
+        }
+        if (upcomingList.length < 7) {
+          const placeholders: BookingDisplay[] = Array.from({ length: 7 - upcomingList.length }).map(() => ({
+            id: `placeholder-${Math.random()}`,
+            occasion_type: 'No Event',
+            payment_mode: '',
+            date: ''
+          }));
+          upcomingList = [...upcomingList, ...placeholders];
+        }
+        setUpcoming(upcomingList);
       } catch {
         setBookings([]);
         setUpcoming([]);
@@ -211,7 +231,7 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
                     <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? new Date((booking as BookingDisplay).date as string).toLocaleDateString() : '-'}</td>
+                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? formatDateDMY((booking as BookingDisplay).date as string) : '-'}</td>
                     <td className="py-3 px-4 text-xl border-b border-[#E5E7EB]">
                       <button
                         className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
@@ -257,7 +277,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <div className="font-medium text-black">{(event as BookingDisplay).occasion_type ?? 'Event'}</div>
-                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).payment_mode ?? '-'}</div>
+                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).date ? formatDateDMY((event as BookingDisplay).date!) : ''}</div>
                   </div>
                 </div>
               );

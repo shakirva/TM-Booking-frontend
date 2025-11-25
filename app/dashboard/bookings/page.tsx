@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { formatDateDMY } from '@/lib/date';
 import BookingDetailsModal from '../../booking/BookingDetailsModal';
 import Modal from 'react-modal';
 import { Booking as FrontendBooking } from '../../../components/booking/BookingDataProvider';
@@ -18,6 +19,10 @@ type Booking = {
   slot_id: number;
   date?: string;
   time?: string;
+  created_at?: string;
+  total_amount?: string;
+  phone?: string;
+  payment_type?: string;
 };
 
 export default function BookingsPage() {
@@ -48,6 +53,8 @@ export default function BookingsPage() {
   const [editPaymentMode, setEditPaymentMode] = useState<'bank' | 'cash' | 'upi'>('cash');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [viewingBooking, setViewingBooking] = useState<FrontendBooking | null>(null);
+  const [search, setSearch] = useState('');
+  const [searchDate, setSearchDate] = useState(''); // YYYY-MM-DD
 
   // Helper to map backend booking to frontend booking type
   function mapToFrontendBooking(booking: Booking): FrontendBooking {
@@ -55,7 +62,7 @@ export default function BookingsPage() {
       id: String(booking.id),
       date: booking.date || '',
       customerName: booking.name || '',
-      customerPhone: '',
+      customerPhone: booking.phone || '',
       customerPhone2: '',
       groomName: '',
       brideName: '',
@@ -66,13 +73,14 @@ export default function BookingsPage() {
       slotTime: booking.time || '',
       price: 0,
       notes: '',
-      paymentType: booking.payment_mode === 'advance' ? 'advance' : 'full',
+      paymentType: (booking.payment_type as ('advance'|'full')) || (booking.advance_amount ? 'advance' : 'full'),
       advanceAmount: booking.advance_amount || '',
       paymentMode: (['bank', 'cash', 'upi'].includes((booking.payment_mode || '') as string)
         ? (booking.payment_mode as 'bank' | 'cash' | 'upi')
         : 'cash'),
-      createdAt: '',
+      createdAt: booking.created_at || '',
       updatedAt: '',
+      price: booking.total_amount ? Number(booking.total_amount) : 0,
   };
 }
 
@@ -279,16 +287,44 @@ export default function BookingsPage() {
       )}
       {/* Card */}
       <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div className="font-semibold text-lg text-gray-800">Bookings</div>
-          <button className="hidden md:inline bg-white border border-gray-300 rounded px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-            {/* Reserved for future actions */}
-          </button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Search (name, occasion, id, date)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm text-black placeholder-gray-400"
+            />
+            <input
+              type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
+              className="border border-gray-300 rounded px-3 py-2 text-sm text-black"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                // Trigger re-filter intentionally; state already drives filtering.
+                setSearch(search.trim());
+              }}
+              className="px-4 py-2 rounded bg-black text-white text-sm font-medium hover:bg-gray-900"
+            >Search</button>
+          </div>
         </div>
 
         {/* Mobile card list */}
         <div className="space-y-3 md:hidden">
-          {bookings.map(b => (
+          {bookings.filter(b => {
+            if (!search.trim()) return true;
+            const q = search.toLowerCase();
+            const dateStrings = [b.date, b.created_at].filter(Boolean).map(d => {
+              const ddmmyy = d ? formatDateDMY(d) : '';
+              return [d, ddmmyy];
+            }).flat();
+            return [b.name, b.occasion_type, b.payment_mode, String(b.id), ...dateStrings].some(f => (f || '').toLowerCase().includes(q));
+          }).map(b => (
             <div
               key={b.id}
               className="border border-gray-200 rounded-xl p-3 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] active:bg-gray-50 transition cursor-pointer"
@@ -320,7 +356,7 @@ export default function BookingsPage() {
               {/* Date row */}
               <div className="flex items-center justify-between text-[12px] mt-2">
                 <span className="text-gray-500">Date</span>
-                <span className="text-gray-700">{b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
+                <span className="text-gray-700">{b.date ? formatDateDMY(b.date) : '-'}</span>
               </div>
               {/* Actions */}
               <div className="flex gap-2 mt-3">
@@ -336,6 +372,7 @@ export default function BookingsPage() {
                   className="text-red-600 hover:text-red-700 font-semibold text-xs border border-red-200 rounded-lg px-3 py-2"
                   onClick={async (e) => {
                     e.stopPropagation();
+                    if (!window.confirm('Delete this booking?')) return;
                     const token = getToken();
                     if (!token) return;
                     await deleteBooking(String(b.id), token);
@@ -357,12 +394,27 @@ export default function BookingsPage() {
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
+                <th className="py-3 px-4 font-medium">Booked Date</th>
                 <th className="py-3 px-4 font-medium rounded-tr-xl">Amount Paid</th>
                 <th className="py-3 px-4 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="text-gray-700">
-              {Array.isArray(bookings) && bookings.map((booking) => (
+              {Array.isArray(bookings) && bookings.filter(booking => {
+                // Text search
+                const textOk = (() => {
+                  if (!search.trim()) return true;
+                  const q = search.toLowerCase();
+                  const dateStrings = [booking.date, booking.created_at].filter(Boolean).map(d => {
+                    const ddmmyy = d ? formatDateDMY(d) : '';
+                    return [d, ddmmyy];
+                  }).flat();
+                  return [booking.name, booking.occasion_type, booking.payment_mode, String(booking.id), ...dateStrings].some(f => (f || '').toLowerCase().includes(q));
+                })();
+                // Date filter (exact match by YYYY-MM-DD against event date)
+                const dateOk = searchDate ? (booking.date ? booking.date.startsWith(searchDate) : false) : true;
+                return textOk && dateOk;
+              }).map((booking) => (
                 <tr
                   key={booking.id}
                   className="hover:bg-gray-100 cursor-pointer"
@@ -372,7 +424,8 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.name}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
-                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${new Date(booking.date).toLocaleDateString()} ${booking.time}` : '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${formatDateDMY(booking.date)} ${booking.time}` : (booking.date ? formatDateDMY(booking.date) : '-')}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.created_at ? formatDateDMY(booking.created_at) : '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">
                     {booking.payment_mode === 'full' && booking.advance_amount
                       ? <span>Full: {booking.advance_amount}</span>
@@ -393,6 +446,7 @@ export default function BookingsPage() {
                       className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
                       onClick={async (e) => {
                         e.stopPropagation();
+                        if (!window.confirm('Are you sure you want to delete this booking?')) return;
                         const token = getToken();
                         if (!token) return;
                         await deleteBooking(String(booking.id), token);

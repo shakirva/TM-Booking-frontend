@@ -3,7 +3,9 @@ import React from 'react';
 
 interface BookingDetails {
   id: string;
-  date: string;
+  date: string; // event date
+  created_at?: string; // booked date (raw)
+  createdAt?: string; // booked date (mapped)
   name?: string;
   customerName?: string;
   phone?: string;
@@ -12,8 +14,11 @@ interface BookingDetails {
   occasion?: string;
   payment_mode?: string;
   paymentMode?: string;
+  paymentType?: 'advance' | 'full';
   advance_amount?: string;
   advanceAmount?: string;
+  total_amount?: string; // optional total stored in backend if added later
+  price?: number; // possible price field from provider
   slot_id?: number;
   time?: string;
 }
@@ -27,15 +32,26 @@ interface BookingDetailsModalProps {
 const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onClose, onEdit }) => {
   if (!bookings || bookings.length === 0) return null;
 
-  const formatAmount = (val?: string) => {
+  const formatAmount = (val?: string | number) => {
     const n = Number(val);
-    if (!Number.isFinite(n) || n <= 0) return '-';
+    if (!Number.isFinite(n) || n < 0) return '-';
+    if (n === 0) return '₹0';
     return `₹${n.toLocaleString()}`;
   };
 
+  const formatDateDMY = (iso?: string) => {
+    if (!iso) return '-';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '-';
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const yy = String(d.getFullYear()).slice(-2);
+    return `${dd}-${mm}-${yy}`;
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-60 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg sm:max-w-xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-[#F8FAFF]">
           <h3 className="text-lg font-semibold text-gray-900">
@@ -60,6 +76,22 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
             const occasion = details.occasion_type || details.occasion || '-';
             const payment = details.payment_mode || details.paymentMode || '-';
             const advance = details.advance_amount || details.advanceAmount || '';
+            const paymentType = details.paymentType || (advance ? 'advance' : 'full');
+            const totalRaw = details.total_amount || (details.price ? String(details.price) : '');
+            const advanceNum = Number(advance);
+            let totalNum = Number(totalRaw);
+            // Fallback to default hall price if total is missing/invalid
+            const DEFAULT_TOTAL = 40000; // change if your standard price differs
+            if (!Number.isFinite(totalNum) || totalNum <= 0) {
+              totalNum = DEFAULT_TOTAL;
+            }
+            let balanceDisplay = '-';
+            if (paymentType === 'full') {
+              balanceDisplay = '₹0';
+            } else if (Number.isFinite(advanceNum) && advanceNum >= 0) {
+              const bal = Math.max(0, totalNum - advanceNum);
+              balanceDisplay = formatAmount(bal);
+            }
             return (
               <div
                 key={details.id || idx}
@@ -67,15 +99,28 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
               >
                 {/* Top row */}
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-blue-50 text-blue-700 border border-blue-100">
-                      {details.time || 'Slot'}
-                    </span>
-                    <span className="text-xs text-gray-500">ID: {details.id}</span>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-blue-50 text-blue-700 border border-blue-100">
+                        {details.time || 'Slot'}
+                      </span>
+                      <span className="text-xs text-gray-500">ID: {details.id}</span>
+                    </div>
+                    <div className="text-xs text-gray-500">Booked: {formatDateDMY(details.created_at || details.createdAt)}</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-[11px] text-gray-500">Advance</div>
-                    <div className="text-base font-semibold text-gray-900">{formatAmount(advance)}</div>
+                    <div className="flex flex-col text-right">
+                      <div className="text-[11px] text-gray-500">Total</div>
+                      <div className="text-sm font-medium text-gray-800">{formatAmount(totalNum)}</div>
+                    </div>
+                    <div className="flex flex-col text-right mt-1">
+                      <div className="text-[11px] text-gray-500">Advance</div>
+                      <div className="text-base font-semibold text-gray-900">{formatAmount(advance)}</div>
+                    </div>
+                    <div className="flex flex-col text-right mt-1">
+                      <div className="text-[11px] text-gray-500">Balance</div>
+                      <div className="text-sm font-medium text-gray-800">{balanceDisplay}</div>
+                    </div>
                   </div>
                 </div>
 
@@ -102,6 +147,14 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
                     <div className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-700 border border-gray-200 capitalize">
                       {payment}
                     </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Booked Date</div>
+                    <div className="text-gray-900 font-medium">{formatDateDMY(details.created_at || details.createdAt)}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Event Date</div>
+                    <div className="text-gray-900 font-medium">{formatDateDMY(details.date)}</div>
                   </div>
                 </div>
 

@@ -89,6 +89,14 @@ export const getRequests = async (token: string) => {
   return res.data;
 };
 
+export const getDeletedBookings = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.get(`${API_URL}/bookings/deleted`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 export const updateRequestStatus = async (id: number, status: string, token: string) => {
   if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.put(`${API_URL}/bookings/requests/${id}`, { status }, {
