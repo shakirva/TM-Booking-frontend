@@ -20,6 +20,8 @@ export default function DashboardPage() {
     advance_amount?: string;
     date?: string;
   };
+  // Internal extended type used during upcoming events computation
+  type BookingWithDateObj = BookingDisplay & { _dateObj: Date | null };
   const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0 });
   const [bookings, setBookings] = useState<BookingDisplay[]>([]);
   const [upcoming, setUpcoming] = useState<BookingDisplay[]>([]);
@@ -32,7 +34,7 @@ export default function DashboardPage() {
         setSummary(summaryData);
         const bookingsData = await getRequests(token);
         // Map camelCase fields to snake_case for dashboard display
-        const mappedBookings = bookingsData.map((b: BookingDisplay) => ({
+        const mappedBookings: BookingDisplay[] = bookingsData.map((b: BookingDisplay) => ({
           ...b,
           occasion_type: b.occasion_type ?? b.occasion ?? '-',
           // utility_type removed
@@ -45,15 +47,17 @@ export default function DashboardPage() {
         // If fewer than 7 future/today events exist, backfill with recent past events, then placeholders.
         const today = new Date();
         today.setHours(0,0,0,0);
-        const datedBookings = mappedBookings.filter(b => b.date).map(b => ({...b, _dateObj: b.date ? new Date(b.date!) : null }));
+        const datedBookings: BookingWithDateObj[] = mappedBookings
+          .filter((b: BookingDisplay) => !!b.date)
+          .map((b: BookingDisplay) => ({ ...b, _dateObj: b.date ? new Date(b.date) : null }));
         const futureOrToday = datedBookings
-          .filter(b => b._dateObj && b._dateObj.getTime() >= today.getTime())
-          .sort((a,b) => (a._dateObj!.getTime() - b._dateObj!.getTime())); // ascending
+          .filter((b: BookingWithDateObj) => b._dateObj && b._dateObj.getTime() >= today.getTime())
+          .sort((a: BookingWithDateObj, b: BookingWithDateObj) => (a._dateObj!.getTime() - b._dateObj!.getTime())); // ascending
         let upcomingList: BookingDisplay[] = futureOrToday.slice(0,7);
         if (upcomingList.length < 7) {
           const past = datedBookings
-            .filter(b => b._dateObj && b._dateObj.getTime() < today.getTime())
-            .sort((a,b) => (b._dateObj!.getTime() - a._dateObj!.getTime())); // most recent past first
+            .filter((b: BookingWithDateObj) => b._dateObj && b._dateObj.getTime() < today.getTime())
+            .sort((a: BookingWithDateObj, b: BookingWithDateObj) => (b._dateObj!.getTime() - a._dateObj!.getTime())); // most recent past first
           const needed = 7 - upcomingList.length;
             upcomingList = [...upcomingList, ...past.slice(0, needed)];
         }

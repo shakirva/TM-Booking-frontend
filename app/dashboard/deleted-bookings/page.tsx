@@ -30,6 +30,7 @@ export default function DeletedBookingsPage() {
         const data = await getDeletedBookings(token);
         setDeleted(Array.isArray(data) ? data : []);
       } catch (err) {
+        console.error('Failed to load deleted bookings:', err);
         setError('Failed to load deleted bookings');
         setDeleted([]);
       } finally {

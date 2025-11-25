@@ -71,7 +71,6 @@ export default function BookingsPage() {
     // utility removed
       timeSlot: '',
       slotTime: booking.time || '',
-      price: 0,
       notes: '',
       paymentType: (booking.payment_type as ('advance'|'full')) || (booking.advance_amount ? 'advance' : 'full'),
       advanceAmount: booking.advance_amount || '',
