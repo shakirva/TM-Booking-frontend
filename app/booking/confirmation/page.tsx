@@ -3,6 +3,7 @@ import React, { useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
 import { useBooking } from "../../context/BookingContext";
+import { formatDateDMY } from '@/lib/date';
 import { FaHome, FaShareAlt } from 'react-icons/fa';
 import html2canvas from "html2canvas";
 // Helper to get array or fallback to single value
@@ -165,7 +166,7 @@ export default function BookingConfirmationPage() {
           <div className="text-gray-600">Occasion</div>
           <div className="text-black font-medium">{slot.occasion || '-'}</div>
           <div className="text-gray-600">Date</div>
-          <div className="text-black font-medium">{slot.date || '-'}</div>
+          <div className="text-black font-medium">{slot.date ? formatDateDMY(slot.date as string) : '-'}</div>
           <div className="text-gray-600">Time Slot</div>
           <div className="text-black font-medium">{timeSlotLabel}</div>
           <div className="text-gray-600">Received Amount</div>

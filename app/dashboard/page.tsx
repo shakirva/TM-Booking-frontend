@@ -42,7 +42,11 @@ export default function DashboardPage() {
           name: b.name ?? b.customerName ?? '-',
           advance_amount: b.advance_amount ?? '-',
         }));
-        setBookings(mappedBookings.slice(-5).reverse()); // show 5 most recent
+        // Ensure recent bookings show the latest by id DESC
+        const recentFive = [...mappedBookings]
+          .sort((a, b) => (Number(b.id ?? 0) - Number(a.id ?? 0)))
+          .slice(0, 5);
+        setBookings(recentFive);
         // Upcoming events logic (improved): show up to 7 upcoming (today or future) events.
         // If fewer than 7 future/today events exist, backfill with recent past events, then placeholders.
         const today = new Date();
