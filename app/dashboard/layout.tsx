@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: 'Bookings', href: '/dashboard/bookings', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 2v4M16 2v4M4 10h16"/></svg>
     ) },
-    { label: 'Deleted Log', href: '/dashboard/deleted-bookings', icon: (
+    { label: 'Event log', href: '/dashboard/deleted-bookings', icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6v12a2 2 0 002 2h4a2 2 0 002-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6l1-2h4l1 2"/></svg>
     ) },
     { label: 'Users', href: '/dashboard/users', icon: (
@@ -58,7 +58,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Desktop Sidebar */}
   <aside className="hidden md:flex w-64 bg-white border-r flex-col">
         <div className="h-16 flex items-center px-6 font-bold text-lg tracking-widest border-[#E5E7EB] border-b text-black">
-          <span className="text-blue-700 mr-2"><Image src="/icons/calender.svg" alt="logo" width={32} height={32} /></span> TM MAHAL
+          <span className="text-blue-700 mr-2"><Image src="/icons/tm.png" alt="logo" width={42} height={42} /></span> TM MAHAL
         </div>
         <nav className="flex-1 py-6 px-4 overflow-y-auto">
           <ul className="space-y-2">
@@ -90,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <aside className="absolute left-0 top-0 h-full w-72 bg-white shadow-xl flex flex-col">
           <div className="h-16 flex items-center justify-between px-6 border-b">
             <div className="font-bold text-lg tracking-widest flex items-center text-black">
-              <span className="text-blue-700 mr-2"><Image src="/icons/calender.svg" alt="logo" width={28} height={28} /></span> TM MAHAL
+              <span className="text-blue-700 mr-2"><Image src="/icons/tm.png" alt="logo" width={38} height={48} /></span> TM MAHAL
             </div>
             <button aria-label="Close menu" className="p-2 rounded hover:bg-gray-100" onClick={() => setMobileOpen(false)}>
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 18L18 6M6 6l12 12"/></svg>
