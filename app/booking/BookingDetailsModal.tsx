@@ -10,6 +10,8 @@ interface BookingDetails {
   customerName?: string;
   phone?: string;
   customerPhone?: string;
+  customer_phone2?: string;
+  phone2?: string;
   occasion_type?: string;
   occasion?: string;
   payment_mode?: string;
@@ -21,6 +23,9 @@ interface BookingDetails {
   price?: number; // possible price field from provider
   slot_id?: number;
   time?: string;
+  groom_name?: string;
+  bride_name?: string;
+  address?: string;
 }
 
 interface BookingDetailsModalProps {
@@ -131,12 +136,36 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
                     <div className="text-gray-900 font-medium truncate">{name}</div>
                   </div>
                   <div>
+                    <div className="text-gray-500 text-xs">Groom</div>
+                        <div className="text-gray-900 font-medium truncate">{details.groom_name || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Bride</div>
+                        <div className="text-gray-900 font-medium truncate">{details.bride_name || '-'}</div>
+                  </div>
+                  <div>
                     <div className="text-gray-500 text-xs">Phone</div>
                     {phone !== '-' ? (
                       <a href={`tel:${phone}`} className="text-gray-900 font-medium underline decoration-dotted underline-offset-2">{phone}</a>
                     ) : (
                       <div className="text-gray-900 font-medium">-</div>
                     )}
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Phone 2</div>
+                        <div className="text-gray-900 font-medium">{details.customer_phone2 || details.phone2 || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Groom</div>
+                        <div className="text-gray-900 font-medium truncate">{details.groom_name || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500 text-xs">Bride</div>
+                        <div className="text-gray-900 font-medium truncate">{details.bride_name || '-'}</div>
+                  <div className="sm:col-span-2">
+                    <div className="text-gray-500 text-xs">Address</div>
+                        <div className="text-gray-900 font-medium">{details.address || '-'}</div>
+                  </div>
                   </div>
                   <div>
                     <div className="text-gray-500 text-xs">Occasion</div>
@@ -155,6 +184,10 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
                   <div>
                     <div className="text-gray-500 text-xs">Event Date</div>
                     <div className="text-gray-900 font-medium">{formatDateDMY(details.date)}</div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="text-gray-500 text-xs">Address</div>
+                    <div className="text-gray-900 font-medium truncate">{details.address || '-'}</div>
                   </div>
                 </div>
 

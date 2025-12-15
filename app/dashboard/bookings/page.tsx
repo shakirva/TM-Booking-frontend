@@ -23,6 +23,13 @@ type Booking = {
   total_amount?: string;
   phone?: string;
   payment_type?: string;
+  // additional fields returned by backend
+  customer_name?: string;
+  customer_phone?: string;
+  customer_phone2?: string;
+  groom_name?: string;
+  bride_name?: string;
+  address?: string;
 };
 
 export default function BookingsPage() {
@@ -62,11 +69,11 @@ export default function BookingsPage() {
       id: String(booking.id),
       date: booking.date || '',
       customerName: booking.name || '',
-      customerPhone: booking.phone || '',
-      customerPhone2: '',
-      groomName: '',
-      brideName: '',
-      address: '',
+      customerPhone: booking.customer_phone || booking.phone || '',
+      customerPhone2: booking.customer_phone2 || booking.customer_phone2 || '',
+      groomName: booking.groom_name || '',
+      brideName: booking.bride_name || '',
+      address: booking.address || '',
       occasion: booking.occasion_type || '',
     // utility removed
       timeSlot: '',
@@ -322,7 +329,8 @@ export default function BookingsPage() {
               const ddmmyy = d ? formatDateDMY(d) : '';
               return [d, ddmmyy];
             }).flat();
-            return [b.name, b.occasion_type, b.payment_mode, String(b.id), ...dateStrings].some(f => (f || '').toLowerCase().includes(q));
+            return [b.name, b.occasion_type, b.payment_mode, String(b.id), b.groom_name, b.bride_name, b.address, ...dateStrings]
+              .some(f => (f || '').toLowerCase().includes(q));
           }).map(b => (
             <div
               key={b.id}
@@ -352,10 +360,24 @@ export default function BookingsPage() {
                   </div>
                 </div>
               </div>
-              {/* Date row */}
-              <div className="flex items-center justify-between text-[12px] mt-2">
-                <span className="text-gray-500">Date</span>
-                <span className="text-gray-700">{b.date ? formatDateDMY(b.date) : '-'}</span>
+              {/* Event date and extra info */}
+              <div className="mt-2 text-[12px] text-gray-600 space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Date</span>
+                  <span className="text-gray-700">{b.date ? formatDateDMY(b.date) : '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Groom</span>
+                  <span className="text-gray-700">{b.groom_name || '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Bride</span>
+                  <span className="text-gray-700">{b.bride_name || '-'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500">Address</span>
+                  <span className="text-gray-700 truncate max-w-[60%]">{b.address || '-'}</span>
+                </div>
               </div>
               {/* Actions */}
               <div className="flex gap-2 mt-3">
@@ -390,6 +412,9 @@ export default function BookingsPage() {
               <tr className="bg-[#F8FAFF] text-gray-400 text-left">
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
+                <th className="py-3 px-4 font-medium">Groom</th>
+                <th className="py-3 px-4 font-medium">Bride</th>
+                <th className="py-3 px-4 font-medium">Address</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
@@ -408,7 +433,8 @@ export default function BookingsPage() {
                     const ddmmyy = d ? formatDateDMY(d) : '';
                     return [d, ddmmyy];
                   }).flat();
-                  return [booking.name, booking.occasion_type, booking.payment_mode, String(booking.id), ...dateStrings].some(f => (f || '').toLowerCase().includes(q));
+                  return [booking.name, booking.occasion_type, booking.payment_mode, String(booking.id), booking.groom_name, booking.bride_name, booking.address, ...dateStrings]
+                    .some(f => (f || '').toLowerCase().includes(q));
                 })();
                 // Date filter (exact match by YYYY-MM-DD against event date)
                 const dateOk = searchDate ? (booking.date ? booking.date.startsWith(searchDate) : false) : true;
@@ -421,6 +447,9 @@ export default function BookingsPage() {
                 >
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.id}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.name}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.groom_name || '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.bride_name || '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.address || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${formatDateDMY(booking.date)} ${booking.time}` : (booking.date ? formatDateDMY(booking.date) : '-')}</td>
