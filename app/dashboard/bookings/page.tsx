@@ -98,6 +98,13 @@ export default function BookingsPage() {
         const data = await getRequests(token);
         if (Array.isArray(data)) {
           setBookings(data);
+          // For debugging: expose raw response to help diagnose missing fields
+          if (typeof window !== 'undefined' && window.location.search.includes('debug=1')) {
+            // attach to window for quick inspection in browser console
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            window.__BOOKINGS_RAW = data;
+          }
         } else {
           setBookings([]);
         }
@@ -293,6 +300,24 @@ export default function BookingsPage() {
       )}
       {/* Card */}
       <div className="bg-white rounded-xl shadow-sm p-4 md:p-6">
+        {/* DEBUG: show raw bookings JSON when ?debug=1 is present in URL */}
+        {typeof window !== 'undefined' && window.location.search.includes('debug=1') && (
+          <div className="mb-4 p-3 bg-gray-50 rounded">
+            <div className="text-sm text-gray-600 font-medium mb-2">Debug: Raw bookings response</div>
+            <pre className="text-xs max-h-48 overflow-auto bg-white p-2 border rounded">{JSON.stringify(bookings.slice(0,10), null, 2)}</pre>
+            <div className="mt-2">
+              <button
+                className="px-3 py-1 rounded bg-blue-600 text-white text-sm"
+                onClick={() => {
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
+                  console.log('RAW BOOKINGS', window.__BOOKINGS_RAW || bookings);
+                  alert('Raw bookings logged to console');
+                }}
+              >Log to console</button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
           <div className="font-semibold text-lg text-gray-800">Bookings</div>
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
