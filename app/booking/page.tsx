@@ -172,11 +172,7 @@ export default function BookingPage() {
   };
 
   // Get booking count for a date (used to differentiate partial/full booking)
-  const getBookingCountForDate = (date: Date) => {
-    const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const dateString = formatDateForComparison(localDate);
-    return getBookingsByDate(dateString)?.length || 0;
-  };
+  // Removed unused helper (was causing ESLint no-unused-vars warning)
 
   // Function to check if a date is available (not booked and not in the past)
   const isDateAvailable = (date: Date) => {

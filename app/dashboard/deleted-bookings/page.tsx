@@ -11,6 +11,7 @@ type DeletedBooking = {
   groom_name?: string;
   bride_name?: string;
   address?: string;
+  details?: string; // notes/details captured at booking time
   occasion_type?: string;
   payment_mode?: string;
   advance_amount?: string;
@@ -87,6 +88,7 @@ export default function DeletedBookingsPage() {
                   <th className="py-3 px-4 font-medium">Groom</th>
                   <th className="py-3 px-4 font-medium">Bride</th>
                   <th className="py-3 px-4 font-medium">Address</th>
+                  <th className="py-3 px-4 font-medium">Details</th>
                   <th className="py-3 px-4 font-medium">Occasion</th>
                   <th className="py-3 px-4 font-medium">Payment Mode</th>
                   <th className="py-3 px-4 font-medium">Advance</th>
@@ -118,6 +120,7 @@ export default function DeletedBookingsPage() {
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.groom_name || '-'}</td>
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.bride_name || '-'}</td>
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.address || '-'}</td>
+                      <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.details || '-'}</td>
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.occasion_type || '-'}</td>
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.payment_mode || '-'}</td>
                       <td className="py-3 px-4 border-b border-[#E5E7EB]">{d.advance_amount || '-'}</td>
