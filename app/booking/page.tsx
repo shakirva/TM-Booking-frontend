@@ -77,14 +77,48 @@ export default function BookingPage() {
     }
   }, [currentStep]);
 
-  // Fetch all slots from backend on mount
+  // Fetch all slots and apply locally configured rates from Settings
   useEffect(() => {
     async function fetchSlots() {
       try {
         const slots = await getSlots('');
-        setAllSlots(slots);
+        let resolved = slots as Slot[];
+        if (typeof window !== 'undefined') {
+          const raw = localStorage.getItem('slotRates');
+          if (raw) {
+            try {
+              const cfg = JSON.parse(raw) as { lunchPrice?: number; receptionPrice?: number };
+              resolved = (slots as Slot[]).map((s) => {
+                if (/lunch/i.test(s.label)) return { ...s, price: cfg.lunchPrice ?? s.price };
+                if (/reception/i.test(s.label)) return { ...s, price: cfg.receptionPrice ?? s.price };
+                return s;
+              });
+            } catch {}
+          }
+        }
+        setAllSlots(resolved);
       } catch {
-        setAllSlots([]);
+        // Fallback to defaults and also try to apply local overrides
+        let fallback: Slot[] = [
+          { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 40000 },
+          { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 },
+        ];
+        if (typeof window !== 'undefined') {
+          const raw = localStorage.getItem('slotRates');
+          if (raw) {
+            try {
+              const cfg = JSON.parse(raw) as { lunchPrice?: number; receptionPrice?: number };
+              fallback = fallback.map((s) =>
+                /lunch/i.test(s.label)
+                  ? { ...s, price: cfg.lunchPrice ?? s.price }
+                  : /reception/i.test(s.label)
+                  ? { ...s, price: cfg.receptionPrice ?? s.price }
+                  : s
+              );
+            } catch {}
+          }
+        }
+        setAllSlots(fallback);
       }
     }
     fetchSlots();
@@ -119,7 +153,7 @@ export default function BookingPage() {
   const today = new Date();
   // Calculate total slot price dynamically based on selected slots
   const slotPrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
-  const minAdvance = 10000;
+  const minAdvance = 5000;
 
   // Check if we're in edit mode by looking for existing booking data
   const isPersonalEditMode = !!(booking?.personal?.customerName && booking?.personal?.phone1);
@@ -186,10 +220,19 @@ export default function BookingPage() {
       // Always force selected-date class so blue stays regardless of booked/available
       classes.push('selected-date');
     } else {
-      const count = getBookingCountForDate(day);
-      if (count >= 2) {
+      const dateString = formatDateForComparison(new Date(day.getFullYear(), day.getMonth(), day.getDate()));
+      const bookings = getBookingsByDate(dateString);
+      const times = (bookings || []).map((b: any) => (b.time || b.slotTime || ''));
+      const lunchBooked = !!timeSlots[0] && times.includes(timeSlots[0].time);
+      const receptionBooked = !!timeSlots[1] && times.includes(timeSlots[1].time);
+      const count = times.filter(Boolean).length;
+
+      // New rule:
+      // - Red (booked-full-date) when Lunch time is booked (even if only one slot is booked).
+      // - Yellow (booked-part-date) when Reception is booked OR when both are booked.
+      if (lunchBooked && !receptionBooked) {
         classes.push('booked-full-date');
-      } else if (count === 1) {
+      } else if (receptionBooked || (lunchBooked && receptionBooked) || count >= 2) {
         classes.push('booked-part-date');
       } else if (isDateAvailable(day)) {
         classes.push('available-date');
@@ -487,11 +530,11 @@ export default function BookingPage() {
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-part"></div>
-                      <span>1 Slot Booked</span>
+                      <span>Reception Booked</span>
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-full"></div>
-                      <span>2 Slots Booked</span>
+                      <span>Lunch Booked</span>
                     </div>
                   </div>
                 </div>
@@ -570,7 +613,7 @@ export default function BookingPage() {
                     ? (details.payment_mode || details.paymentMode)
                     : 'cash') as 'bank' | 'cash' | 'upi',
                   price: 0,
-                  notes: '',
+                  notes: (details as any).details || (details as any).notes || '',
                   createdAt: '',
                   updatedAt: '',
                 });
@@ -771,11 +814,11 @@ export default function BookingPage() {
                       </div>
                       <div className="calendar-legend-item">
                         <div className="calendar-legend-dot booked-part"></div>
-                        <span>1 Slot Booked</span>
+                        <span>Reception Booked</span>
                       </div>
                       <div className="calendar-legend-item">
                         <div className="calendar-legend-dot booked-full"></div>
-                        <span>2 Slots Booked</span>
+                        <span>Lunch Booked</span>
                       </div>
                     </div>
                   </div>

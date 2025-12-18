@@ -12,6 +12,7 @@ import { getToken } from '@/lib/auth';
 type Booking = {
   id: number;
   name: string;
+  details?: string;
   occasion_type?: string;
   // utility_type removed
   payment_mode?: string;
@@ -74,11 +75,11 @@ export default function BookingsPage() {
       groomName: booking.groom_name || '',
       brideName: booking.bride_name || '',
       address: booking.address || '',
+      notes: booking.details || '',
       occasion: booking.occasion_type || '',
     // utility removed
       timeSlot: '',
       slotTime: booking.time || '',
-      notes: '',
       paymentType: (booking.payment_type as ('advance'|'full')) || (booking.advance_amount ? 'advance' : 'full'),
       advanceAmount: booking.advance_amount || '',
       paymentMode: (['bank', 'cash', 'upi'].includes((booking.payment_mode || '') as string)
@@ -374,6 +375,9 @@ export default function BookingsPage() {
                 <div className="min-w-0">
                   <div className="text-sm text-gray-900 font-medium truncate">{b.name}</div>
                   <div className="text-[12px] text-gray-500 truncate">{b.occasion_type || '-'}</div>
+                  {b.details && (
+                    <div className="text-[12px] text-gray-500 truncate mt-1">Notes: {b.details}</div>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-xs text-gray-500">Amount</div>
@@ -434,13 +438,14 @@ export default function BookingsPage() {
         <div className="overflow-x-auto hidden md:block">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
-              <tr className="bg-[#F8FAFF] text-gray-400 text-left">
+                <tr className="bg-[#F8FAFF] text-gray-400 text-left">
                 <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
                 <th className="py-3 px-4 font-medium">Customer</th>
                 <th className="py-3 px-4 font-medium">Groom</th>
                 <th className="py-3 px-4 font-medium">Bride</th>
                 <th className="py-3 px-4 font-medium">Address</th>
                 <th className="py-3 px-4 font-medium">Occasion Type</th>
+                <th className="py-3 px-4 font-medium">Details</th>
                 <th className="py-3 px-4 font-medium">Payment Mode</th>
                 <th className="py-3 px-4 font-medium">Date & Time</th>
                 <th className="py-3 px-4 font-medium">Booked Date</th>
@@ -476,6 +481,7 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.bride_name || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.address || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.occasion_type || '-'}</td>
+                  <td className="py-3 px-4 border-b border-[#E5E7EB] max-w-[200px] truncate">{booking.details || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.payment_mode || '-'}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.date && booking.time ? `${formatDateDMY(booking.date)} ${booking.time}` : (booking.date ? formatDateDMY(booking.date) : '-')}</td>
                   <td className="py-3 px-4 border-b border-[#E5E7EB]">{booking.created_at ? formatDateDMY(booking.created_at) : '-'}</td>

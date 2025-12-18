@@ -27,7 +27,7 @@ const PaymentDetailsForm: React.FC<PaymentDetailsFormProps> = ({
   paymentMode,
   setPaymentMode,
   totalAmount,
-  minAdvance = 10000,
+  minAdvance = 5000,
   isEditMode = false,
   isReadOnly = false
 }) => {

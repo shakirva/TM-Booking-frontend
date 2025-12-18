@@ -14,6 +14,8 @@ interface BookingDetails {
   phone2?: string;
   occasion_type?: string;
   occasion?: string;
+  details?: string;
+  notes?: string;
   payment_mode?: string;
   paymentMode?: string;
   paymentType?: 'advance' | 'full';
@@ -80,6 +82,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
             const phone = details.phone || details.customerPhone || '-';
             const occasion = details.occasion_type || details.occasion || '-';
             const payment = details.payment_mode || details.paymentMode || '-';
+            const notes = details.details || details.notes || '-';
             const advance = details.advance_amount || details.advanceAmount || '';
             const paymentType = details.paymentType || (advance ? 'advance' : 'full');
             const totalRaw = details.total_amount || (details.price ? String(details.price) : '');
@@ -177,6 +180,10 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
                       {payment}
                     </div>
                   </div>
+                  <div className="sm:col-span-2">
+                    <div className="text-gray-500 text-xs">Address</div>
+                    <div className="text-gray-900 font-medium">{details.address || '-'}</div>
+                  </div>
                   <div>
                     <div className="text-gray-500 text-xs">Booked Date</div>
                     <div className="text-gray-900 font-medium">{formatDateDMY(details.created_at || details.createdAt)}</div>
@@ -186,8 +193,8 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
                     <div className="text-gray-900 font-medium">{formatDateDMY(details.date)}</div>
                   </div>
                   <div className="sm:col-span-2">
-                    <div className="text-gray-500 text-xs">Address</div>
-                    <div className="text-gray-900 font-medium truncate">{details.address || '-'}</div>
+                    <div className="text-gray-500 text-xs">Notes</div>
+                    <div className="text-gray-900 font-medium whitespace-pre-wrap break-words">{notes}</div>
                   </div>
                 </div>
 
@@ -206,7 +213,6 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
             );
           })}
         </div>
-
         {/* Footer */}
         <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-end">
           <button className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50" onClick={onClose}>
