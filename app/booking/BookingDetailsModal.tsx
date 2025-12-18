@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-interface BookingDetails {
+export interface BookingDetails {
   id: string;
   date: string; // event date
   created_at?: string; // booked date (raw)

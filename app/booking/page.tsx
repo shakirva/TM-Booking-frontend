@@ -13,6 +13,7 @@ import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';
 import PersonalPaymentForm from '../../components/booking/PersonalPaymentForm';
 import BookingDetailsModal from './BookingDetailsModal';
+import type { BookingDetails as ModalBookingDetails } from './BookingDetailsModal';
 
 export default function BookingPage() {
   const router = useRouter();
@@ -222,7 +223,8 @@ export default function BookingPage() {
     } else {
       const dateString = formatDateForComparison(new Date(day.getFullYear(), day.getMonth(), day.getDate()));
       const bookings = getBookingsByDate(dateString);
-      const times = (bookings || []).map((b: any) => (b.time || b.slotTime || ''));
+      type BookingLike = Partial<Booking> & { time?: string; slotTime?: string };
+      const times = (bookings || []).map((b: BookingLike) => b.time ?? b.slotTime ?? '');
       const lunchBooked = !!timeSlots[0] && times.includes(timeSlots[0].time);
       const receptionBooked = !!timeSlots[1] && times.includes(timeSlots[1].time);
       const count = times.filter(Boolean).length;
@@ -594,7 +596,7 @@ export default function BookingPage() {
             <BookingDetailsModal
               bookings={modalBookings}
               onClose={() => setShowDetailsModal(false)}
-              onEdit={(details) => {
+              onEdit={(details: ModalBookingDetails) => {
                 setEditingBooking({
                   id: details.id,
                   date: details.date || '',
@@ -613,7 +615,7 @@ export default function BookingPage() {
                     ? (details.payment_mode || details.paymentMode)
                     : 'cash') as 'bank' | 'cash' | 'upi',
                   price: 0,
-                  notes: (details as any).details || (details as any).notes || '',
+                  notes: details.details || details.notes || '',
                   createdAt: '',
                   updatedAt: '',
                 });
