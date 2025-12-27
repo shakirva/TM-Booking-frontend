@@ -4,11 +4,11 @@ import React from "react";
 // Local storage key shared with booking page
 const STORAGE_KEY = "slotRates";
 
-type SlotKey = "lunch" | "reception";
+type SlotKey = "lunch" | "dinner";
 
-type Rates = { lunchPrice: number; receptionPrice: number };
+type Rates = { lunchPrice: number; dinnerPrice: number };
 
-const defaultRates: Rates = { lunchPrice: 40000, receptionPrice: 40000 };
+const defaultRates: Rates = { lunchPrice: 40000, dinnerPrice: 40000 };
 
 export default function SlotsPage() {
   const [selected, setSelected] = React.useState<SlotKey>("lunch");
@@ -22,16 +22,17 @@ export default function SlotsPage() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
-        const r = JSON.parse(raw) as Partial<Rates>;
+        // Support both dinnerPrice (new) and receptionPrice (legacy)
+        const r = JSON.parse(raw) as Partial<Rates> & { receptionPrice?: number };
         setRates({
           lunchPrice: typeof r.lunchPrice === "number" ? r.lunchPrice : defaultRates.lunchPrice,
-          receptionPrice: typeof r.receptionPrice === "number" ? r.receptionPrice : defaultRates.receptionPrice,
+          dinnerPrice: typeof r.dinnerPrice === "number" ? r.dinnerPrice : (typeof r.receptionPrice === "number" ? r.receptionPrice : defaultRates.dinnerPrice),
         });
       }
     } catch {}
   }, []);
 
-  const currentValue = selected === "lunch" ? rates.lunchPrice : rates.receptionPrice;
+  const currentValue = selected === "lunch" ? rates.lunchPrice : rates.dinnerPrice;
 
   const handleSave = () => {
     setSaving(true);
@@ -65,11 +66,11 @@ export default function SlotsPage() {
             </button>
             <button
               className={`px-3 py-2 rounded-lg text-sm text-left border w-full ${
-                selected === "reception" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
+                selected === "dinner" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-800 border-gray-200 hover:bg-gray-50"
               }`}
-              onClick={() => setSelected("reception")}
+              onClick={() => setSelected("dinner")}
             >
-              Reception Time
+              Dinner Time
             </button>
           </nav>
         </aside>
@@ -77,7 +78,7 @@ export default function SlotsPage() {
         {/* Content */}
         <section className="flex-1 p-6">
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">{selected === "lunch" ? "Lunch Time" : "Reception Time"} Rate</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{selected === "lunch" ? "Lunch Time" : "Dinner Time"} Rate</h2>
             <p className="text-sm text-gray-500">Editing rate is local to this device and will be used on the Booking page.</p>
           </div>
           <div className="max-w-sm space-y-3">
@@ -90,7 +91,7 @@ export default function SlotsPage() {
               onChange={(e) => {
                 const val = Number(e.target.value) || 0;
                 setRates((r) => (
-                  selected === "lunch" ? { ...r, lunchPrice: val } : { ...r, receptionPrice: val }
+                  selected === "lunch" ? { ...r, lunchPrice: val } : { ...r, dinnerPrice: val }
                 ));
               }}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-black bg-white"

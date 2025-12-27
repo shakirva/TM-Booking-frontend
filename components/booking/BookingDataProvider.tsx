@@ -34,7 +34,7 @@ export interface TimeSlot {
 
 export interface BookingFormData {
   // Slot Selection
-    selectedTab: 'Reception' | 'Day Time';
+    selectedTab: 'Dinner' | 'Day Time';
     selectedSlots: number[];
   occasion: string;
   // utility type removed
@@ -58,8 +58,8 @@ export interface BookingFormData {
 // Removed mockBookings, now using backend API
 
 export const timeSlots: TimeSlot[] = [
-  { label: 'Lunch Time', time: '10:00 AM - 6:00 PM', price: 40000 },
-  { label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 }
+  { label: 'Lunch Time', time: '9:00 AM - 4:00 PM', price: 40000 },
+  { label: 'Dinner Time', time: '6:00 PM - 10:00 PM', price: 40000 }
 ];
 
 export const occasionTypes = [
@@ -192,7 +192,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     // Support multi-slot: booking.slotTime can be a comma-separated string of slot times
     const slotTimes = booking.slotTime ? booking.slotTime.split(',').map(s => s.trim()) : [];
     setCurrentBooking({
-      selectedTab: 'Reception', // or 'Day Time' if you want to infer from booking
+      selectedTab: 'Dinner', // or 'Day Time' if you want to infer from booking
       selectedSlots: slotTimes.length > 0 ? slotTimes.map(label => timeSlots.findIndex(ts => ts.time === label)).filter(idx => idx !== -1) : [],
       occasion: booking.occasion,
   // utility removed

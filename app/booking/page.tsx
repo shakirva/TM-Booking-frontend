@@ -27,8 +27,8 @@ export default function BookingPage() {
   }, [router]);
   // Fallback slots if backend not available
   const fallbackTimeSlots = [
-    { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 40000 },
-    { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 },
+    { id: 1, label: 'Lunch Time', time: '9:00 AM - 4:00 PM', price: 40000 },
+    { id: 2, label: 'Dinner Time', time: '6:00 PM - 10:00 PM', price: 40000 },
   ];
   interface Slot {
     id: number;
@@ -88,10 +88,11 @@ export default function BookingPage() {
           const raw = localStorage.getItem('slotRates');
           if (raw) {
             try {
-              const cfg = JSON.parse(raw) as { lunchPrice?: number; receptionPrice?: number };
+              const cfg = JSON.parse(raw) as { lunchPrice?: number; dinnerPrice?: number; receptionPrice?: number };
               resolved = (slots as Slot[]).map((s) => {
                 if (/lunch/i.test(s.label)) return { ...s, price: cfg.lunchPrice ?? s.price };
-                if (/reception/i.test(s.label)) return { ...s, price: cfg.receptionPrice ?? s.price };
+                // Backward compatibility: treat "Reception" as "Dinner"
+                if (/dinner|reception/i.test(s.label)) return { ...s, price: (cfg.dinnerPrice ?? cfg.receptionPrice) ?? s.price };
                 return s;
               });
             } catch {}
@@ -101,19 +102,19 @@ export default function BookingPage() {
       } catch {
         // Fallback to defaults and also try to apply local overrides
         let fallback: Slot[] = [
-          { id: 1, label: 'Lunch Time', time: '9:00 AM - 6:00 PM', price: 40000 },
-          { id: 2, label: 'Reception Time', time: '1:00 PM - 8:00 PM', price: 40000 },
+          { id: 1, label: 'Lunch Time', time: '9:00 AM - 4:00 PM', price: 40000 },
+          { id: 2, label: 'Dinner Time', time: '6:00 PM - 10:00 PM', price: 40000 },
         ];
         if (typeof window !== 'undefined') {
           const raw = localStorage.getItem('slotRates');
           if (raw) {
             try {
-              const cfg = JSON.parse(raw) as { lunchPrice?: number; receptionPrice?: number };
+              const cfg = JSON.parse(raw) as { lunchPrice?: number; dinnerPrice?: number; receptionPrice?: number };
               fallback = fallback.map((s) =>
                 /lunch/i.test(s.label)
                   ? { ...s, price: cfg.lunchPrice ?? s.price }
-                  : /reception/i.test(s.label)
-                  ? { ...s, price: cfg.receptionPrice ?? s.price }
+                  : /dinner|reception/i.test(s.label)
+                  ? { ...s, price: (cfg.dinnerPrice ?? cfg.receptionPrice) ?? s.price }
                   : s
               );
             } catch {}
@@ -528,7 +529,7 @@ export default function BookingPage() {
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-part"></div>
-                      <span>Reception Booked</span>
+                      <span>Dinner Booked</span>
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-full"></div>
@@ -812,7 +813,7 @@ export default function BookingPage() {
                       </div>
                       <div className="calendar-legend-item">
                         <div className="calendar-legend-dot booked-part"></div>
-                        <span>Reception Booked</span>
+                        <span>Dinner Booked</span>
                       </div>
                       <div className="calendar-legend-item">
                         <div className="calendar-legend-dot booked-full"></div>
