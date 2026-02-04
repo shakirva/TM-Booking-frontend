@@ -6,7 +6,6 @@ import Modal from 'react-modal';
 import { getRequests, deleteBooking, updateBooking as apiUpdateBooking } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
-import BookingDetailsModal from '@/app/booking/BookingDetailsModal';
 
 type Booking = {
   id: number;
@@ -503,17 +502,6 @@ export default function BookingsPage() {
           )}
         </div>
       </Modal>
-
-      {/* Booking Details Modal */}
-      {showDetailsModal && viewingBooking && (
-        <BookingDetailsModal
-          bookings={[viewingBooking]}
-          onClose={() => {
-            setShowDetailsModal(false);
-            setViewingBooking(null);
-          }}
-        />
-      )}
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
