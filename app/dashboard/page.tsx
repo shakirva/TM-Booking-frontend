@@ -1,296 +1,208 @@
 "use client";
 import { useEffect, useState } from 'react';
 import { MdOutlineCalendarMonth } from "react-icons/md";
-import { FaRegUser } from "react-icons/fa6";
-import { getDashboardSummary, getRequests } from '@/lib/api';
+import { FaRegUser, FaPhoneAlt } from "react-icons/fa";
+import { FiCalendar, FiMessageSquare } from "react-icons/fi";
+import { getDashboardSummary, getUpcomingEvents } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { formatDateDMY } from '@/lib/date';
 
+interface UpcomingEvent {
+  id: string | number;
+  event_date: string;
+  customer_name: string;
+  primary_phone: string;
+  remarks: string;
+}
 
 export default function DashboardPage() {
-  type BookingDisplay = {
-    id?: string | number;
-    name?: string;
-    customerName?: string;
-    occasion_type?: string;
-    occasion?: string;
-  // utility_type removed
-    payment_mode?: string;
-    paymentMode?: string;
-    advance_amount?: string;
-    date?: string;
-  };
-  // Internal extended type used during upcoming events computation
-  type BookingWithDateObj = BookingDisplay & { _dateObj: Date | null };
-  const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0 });
-  const [bookings, setBookings] = useState<BookingDisplay[]>([]);
-  const [upcoming, setUpcoming] = useState<BookingDisplay[]>([]);
+  const [summary, setSummary] = useState<Record<string, unknown>>({ total_bookings: 0, total_slots: 0, total_users: 0, total_customers: 0 });
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
       if (!token) return;
       try {
-        const summaryData = await getDashboardSummary(token);
+        const [summaryData, eventsData] = await Promise.all([
+          getDashboardSummary(token),
+          getUpcomingEvents(token)
+        ]);
         setSummary(summaryData);
-        const bookingsData = await getRequests(token);
-        // Map camelCase fields to snake_case for dashboard display
-        const mappedBookings: BookingDisplay[] = bookingsData.map((b: BookingDisplay) => ({
-          ...b,
-          occasion_type: b.occasion_type ?? b.occasion ?? '-',
-          // utility_type removed
-          payment_mode: b.payment_mode ?? b.paymentMode ?? '-',
-          name: b.name ?? b.customerName ?? '-',
-          advance_amount: b.advance_amount ?? '-',
-        }));
-        // Ensure recent bookings show the latest by id DESC
-        const recentFive = [...mappedBookings]
-          .sort((a, b) => (Number(b.id ?? 0) - Number(a.id ?? 0)))
-          .slice(0, 5);
-        setBookings(recentFive);
-        // Upcoming events logic (improved): show up to 7 upcoming (today or future) events.
-        // If fewer than 7 future/today events exist, backfill with recent past events, then placeholders.
-        const today = new Date();
-        today.setHours(0,0,0,0);
-        const datedBookings: BookingWithDateObj[] = mappedBookings
-          .filter((b: BookingDisplay) => !!b.date)
-          .map((b: BookingDisplay) => ({ ...b, _dateObj: b.date ? new Date(b.date) : null }));
-        const futureOrToday = datedBookings
-          .filter((b: BookingWithDateObj) => b._dateObj && b._dateObj.getTime() >= today.getTime())
-          .sort((a: BookingWithDateObj, b: BookingWithDateObj) => (a._dateObj!.getTime() - b._dateObj!.getTime())); // ascending
-        let upcomingList: BookingDisplay[] = futureOrToday.slice(0,7);
-        if (upcomingList.length < 7) {
-          const past = datedBookings
-            .filter((b: BookingWithDateObj) => b._dateObj && b._dateObj.getTime() < today.getTime())
-            .sort((a: BookingWithDateObj, b: BookingWithDateObj) => (b._dateObj!.getTime() - a._dateObj!.getTime())); // most recent past first
-          const needed = 7 - upcomingList.length;
-            upcomingList = [...upcomingList, ...past.slice(0, needed)];
-        }
-        if (upcomingList.length < 7) {
-          const placeholders: BookingDisplay[] = Array.from({ length: 7 - upcomingList.length }).map(() => ({
-            id: `placeholder-${Math.random()}`,
-            occasion_type: 'No Event',
-            payment_mode: '',
-            date: ''
-          }));
-          upcomingList = [...upcomingList, ...placeholders];
-        }
-        setUpcoming(upcomingList);
-      } catch {
-        setBookings([]);
-        setUpcoming([]);
+        setUpcomingEvents(eventsData || []);
+      } catch (err) {
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-500">Loading dashboard...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Total Bookings */}
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
-          <div className="flex items-end justify-between  w-full gap-2">
+        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB] hover:shadow-lg transition-shadow">
+          <div className="flex items-end justify-between w-full gap-2">
             <div>
               <span className="bg-blue-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
                 <MdOutlineCalendarMonth className="h-7 w-7 text-blue-500"/>
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Bookings</div>
-              <div className="text-2xl font-bold text-black">{String(summary.total_bookings ?? 0)}</div>
+              <div className="text-3xl font-bold text-black">{String(summary.total_bookings ?? 0)}</div>
             </div>
           </div>
         </div>
         {/* Total Users */}
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
+        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB] hover:shadow-lg transition-shadow">
           <div className="flex items-end justify-between w-full gap-2">
             <div>
               <span className="bg-green-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
                 <FaRegUser className="h-7 w-7 text-green-500" />
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Users</div>
-              <div className="text-2xl font-bold text-black">{String(summary.total_users ?? 0)}</div>
+              <div className="text-3xl font-bold text-black">{String(summary.total_users ?? 0)}</div>
             </div>
           </div>
         </div>
         {/* Total Customers */}
-        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB]">
+        <div className="bg-white rounded-xl p-6 flex flex-col items-start border border-[#E5E7EB] hover:shadow-lg transition-shadow">
           <div className="flex items-end justify-between w-full gap-2">
             <div>
-              <span className="bg-yellow-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
-                {/* You can use a different icon for customers if you want */}
-                <FaRegUser className="h-7 w-7 text-yellow-500" />
+              <span className="bg-amber-50 rounded-lg w-12 h-12 p-3 mb-4 flex items-center justify-center">
+                <FaRegUser className="h-7 w-7 text-amber-500" />
               </span>
               <div className="text-gray-500 text-base font-medium mb-2">Total Customers</div>
-              <div className="text-2xl font-bold text-black">{String(summary.total_customers ?? 0)}</div>
+              <div className="text-3xl font-bold text-black">{String(summary.total_customers ?? 0)}</div>
             </div>
           </div>
         </div>
       </div>
-      {/* Action Buttons */}
-      {/* <div className="grid grid-cols-4 gap-6">
-       
-        <button className="bg-white rounded-xl p-6 flex items-center gap-4 border border-[#E5E7EB] hover:bg-blue-50 transition">
-          <span className="bg-blue-50 rounded-lg p-2 flex items-center justify-center">
-          
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-          </span>
-          <span className="font-semibold text-black">New Booking</span>
-        </button>
-     
-        <button className="bg-white rounded-xl p-6 flex items-center gap-4 border border-[#E5E7EB] hover:bg-blue-50 transition">
-          <span className="bg-blue-50 rounded-lg p-2 flex items-center justify-center">
-          
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A9 9 0 1112 21a9 9 0 01-6.879-3.196z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-          </span>
-          <span className="font-semibold text-black">Add User</span>
-        </button>
-      
-        <button className="bg-white rounded-xl p-6 flex items-center gap-4 border border-[#E5E7EB] hover:bg-blue-50 transition">
-          <span className="bg-blue-50 rounded-lg p-2 flex items-center justify-center">
-     
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="7" width="18" height="14" rx="2" />
-              <path d="M16 3v4M8 3v4M3 11h18" />
-            </svg>
-          </span>
-          <span className="font-semibold text-black">View Calendar</span>
-        </button>
-      
-        <button className="bg-white rounded-xl p-6 flex items-center gap-4 border border-[#E5E7EB] hover:bg-blue-50 transition">
-          <span className="bg-blue-50 rounded-lg p-2 flex items-center justify-center">
-          
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 17v2a1 1 0 001 1h14a1 1 0 001-1v-2M7 13v4M12 9v8M17 6v11" />
-            </svg>
-          </span>
-          <span className="font-semibold text-black">Generate Report</span>
-        </button>
-      </div> */}
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Bookings */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm">
-          <div className="font-semibold text-lg text-gray-800 p-4 border-b border-[#E5E7EB]">Recent Bookings</div>
-          {/* Mobile cards */}
-          <div className="p-4 space-y-3 md:hidden">
-            {bookings.length === 0 && (
-              <div className="text-gray-400 text-center">No recent bookings</div>
-            )}
-            {bookings.map((b) => (
-              <div key={String(b.id)} className="rounded-lg border border-gray-200 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="font-semibold text-black">#{String(b.id)}</div>
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{b.payment_mode ?? '-'}</span>
-                </div>
-                <div className="text-sm text-gray-600 mt-1">{b.name ?? '-'}</div>
-                <div className="text-sm text-gray-500">{b.occasion_type ?? '-'}</div>
-                <div className="flex items-center justify-between mt-2 text-sm">
-                  <span className="text-gray-500">Advance</span>
-                  <span className="font-medium text-black">{b.advance_amount ?? '-'}</span>
-                </div>
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <span>Date</span>
-                  <span>{b.date ? new Date(b.date).toLocaleDateString() : '-'}</span>
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <button
-                    className="text-red-500 hover:text-red-700 font-semibold text-xs border border-red-100 rounded px-2 py-1"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      if (!b.id) return;
-                      if (!window.confirm('Delete this booking?')) return;
-                      const token = getToken();
-                      if (!token) return;
-                      try {
-                        await import('@/lib/api').then(mod => mod.deleteBooking(String(b.id), token));
-                        setBookings(bookings.filter(x => x.id !== b.id));
-                      } catch {
-                        alert('Failed to delete booking.');
-                      }
-                    }}
-                  >Delete</button>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Desktop table */}
-          <div className="overflow-x-auto hidden md:block">
-            <table className="w-full text-sm border-separate border-spacing-0">
-              <thead>
-                <tr className="bg-[#F8FAFF] text-gray-400 text-left">
-                  <th className="py-3 px-4 font-medium rounded-tl-xl">Booking ID</th>
-                  <th className="py-3 px-4 font-medium">Customer</th>
-                  <th className="py-3 px-4 font-medium">Occasion Type</th>
-                  <th className="py-3 px-4 font-medium">Payment Mode</th>
-                  <th className="py-3 px-4 font-medium">Advance Amount</th>
-                  <th className="py-3 px-4 font-medium">Booked Date</th>
-                  <th className="py-3 px-4 font-medium rounded-tr-xl">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="text-gray-700">
-                {bookings.map((booking) => (
-                  <tr key={String((booking as BookingDisplay).id)} className="hover:bg-gray-50">
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{String((booking as BookingDisplay).id ?? '')}</td>
-                    <td className="py-3 px-4 font-medium border-b border-[#E5E7EB]">{(booking as BookingDisplay).name ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).occasion_type ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).payment_mode ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).advance_amount ?? '-'}</td>
-                    <td className="py-3 px-4 border-b border-[#E5E7EB]">{(booking as BookingDisplay).date ? formatDateDMY((booking as BookingDisplay).date as string) : '-'}</td>
-                    <td className="py-3 px-4 text-xl border-b border-[#E5E7EB]">
-                      <button
-                        className="text-red-500 hover:text-red-700 font-bold text-sm border border-red-100 rounded px-2 py-1"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (!booking.id) return;
-                          if (!window.confirm('Are you sure you want to delete this booking?')) return;
-                          const token = getToken();
-                          if (!token) return;
-                          try {
-                            await import('@/lib/api').then(mod => mod.deleteBooking(String(booking.id), token));
-                            setBookings(bookings.filter(b => b.id !== booking.id));
-                          } catch {
-                            alert('Failed to delete booking.');
-                          }
-                        }}
-                      >Delete</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+      {/* Upcoming Events Section */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 rounded-lg p-2">
+              <FiCalendar className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-lg text-gray-900">Upcoming Events</h2>
+              <p className="text-sm text-gray-500">Sorted by event date (ascending)</p>
+            </div>
           </div>
         </div>
+        
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Event Date</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Customer Name</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Primary Phone</th>
+                <th className="py-3 px-4 text-left text-sm font-semibold text-gray-700">Remarks</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {upcomingEvents.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-gray-400">
+                    No upcoming events scheduled
+                  </td>
+                </tr>
+              ) : (
+                upcomingEvents.map((event) => (
+                  <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center w-10 h-10 bg-blue-100 text-blue-700 rounded-lg font-bold text-sm">
+                          {event.event_date ? new Date(event.event_date).getDate() : '-'}
+                        </span>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {event.event_date ? formatDateDMY(event.event_date) : '-'}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {event.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { weekday: 'short' }) : ''}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="font-medium text-gray-900">{event.customer_name || '-'}</div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <FaPhoneAlt className="h-3 w-3 text-gray-400" />
+                        {event.primary_phone || '-'}
+                      </div>
+                    </td>
+                    <td className="py-4 px-4">
+                      <div className="flex items-center gap-2 text-gray-600 max-w-[200px]">
+                        {event.remarks ? (
+                          <>
+                            <FiMessageSquare className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                            <span className="truncate" title={event.remarks}>{event.remarks}</span>
+                          </>
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        {/* Upcoming Events */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
-          <div className="font-semibold text-lg mb-4 text-gray-800">Upcoming Events</div>
-          <div className="flex flex-col gap-4">
-            {upcoming.length === 0 && (
-              <div className="text-gray-400 text-center">No upcoming events</div>
-            )}
-            {upcoming.map((event) => {
-              const dateValue = (event as BookingDisplay).date ?? null;
-              const dateObj = dateValue ? new Date(dateValue) : null;
-              const month = dateObj ? dateObj.toLocaleString('default', { month: 'short' }) : '-';
-              const day = dateObj ? dateObj.getDate() : '-';
-              return (
-                <div key={String((event as BookingDisplay).id)} className="flex items-center bg-[#F8FAFF] rounded-lg p-4 gap-4">
-                  <div className="flex flex-col items-center justify-center bg-blue-100 text-blue-700 rounded-lg px-3 py-2 min-w-[48px]">
-                    <span className="text-xs font-semibold">{month}</span>
-                    <span className="text-lg font-bold leading-none">{day}</span>
+        {/* Mobile Cards */}
+        <div className="md:hidden p-4 space-y-3">
+          {upcomingEvents.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              No upcoming events scheduled
+            </div>
+          ) : (
+            upcomingEvents.map((event) => (
+              <div key={event.id} className="bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex flex-col items-center justify-center bg-blue-100 text-blue-700 rounded-lg px-3 py-2 min-w-[50px]">
+                    <span className="text-xs font-semibold uppercase">
+                      {event.event_date ? new Date(event.event_date).toLocaleDateString('en-US', { month: 'short' }) : '-'}
+                    </span>
+                    <span className="text-xl font-bold leading-none">
+                      {event.event_date ? new Date(event.event_date).getDate() : '-'}
+                    </span>
                   </div>
-                  <div>
-                    <div className="font-medium text-black">{(event as BookingDisplay).occasion_type ?? 'Event'}</div>
-                    <div className="text-xs text-gray-400 mt-1">{(event as BookingDisplay).date ? formatDateDMY((event as BookingDisplay).date!) : ''}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-gray-900">{event.customer_name || '-'}</div>
+                    <div className="text-sm text-gray-600 flex items-center gap-1 mt-1">
+                      <FaPhoneAlt className="h-3 w-3 text-gray-400" />
+                      {event.primary_phone || '-'}
+                    </div>
+                    {event.remarks && (
+                      <div className="text-sm text-gray-500 mt-2 flex items-start gap-1">
+                        <FiMessageSquare className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="line-clamp-2">{event.remarks}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

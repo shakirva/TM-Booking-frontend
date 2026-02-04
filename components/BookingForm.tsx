@@ -1,12 +1,11 @@
 import React from 'react';
-import { TimeSlot, Booking, occasionTypes } from './booking/BookingDataProvider';
+import { TimeSlot, Booking } from './booking/BookingDataProvider';
 
 interface BookingFormProps {
   selectedSlots: number[];
   setSelectedSlots: (slots: number[]) => void;
   occasion: string;
   setOccasion: (occasion: string) => void;
-  // utility type removed
   notes: string;
   setNotes: (notes: string) => void;
   timeSlots: TimeSlot[];
@@ -14,7 +13,11 @@ interface BookingFormProps {
   isEditMode?: boolean;
   editingBooking?: Booking | null;
   bookedTimes?: string[];
-  // Removed selectedTab and setSelectedTab from props
+  // Night option
+  includeNight?: boolean;
+  setIncludeNight?: (value: boolean) => void;
+  nightPrice?: number;
+  totalAmount?: number;
 }
 
 const BookingForm: React.FC<BookingFormProps> = ({
@@ -22,15 +25,17 @@ const BookingForm: React.FC<BookingFormProps> = ({
   setSelectedSlots,
   occasion,
   setOccasion,
-  // utility type removed
   notes,
   setNotes,
   timeSlots,
   date,
   isEditMode = false,
   editingBooking = null,
-  bookedTimes = []
-  // Removed selectedTab and setSelectedTab from destructure
+  bookedTimes = [],
+  includeNight = false,
+  setIncludeNight,
+  nightPrice = 0,
+  totalAmount = 0
 }) => {
   // If in edit mode and we have booking data, populate the form
   React.useEffect(() => {
@@ -41,16 +46,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
     }
   }, [isEditMode, editingBooking, setOccasion, setNotes, setSelectedSlots]);
 
-  // Show form even when no date is selected, but with appropriate messaging
-
-  // Remove the separate save function since we're handling it in the Next button
-
   return (
     <>
-  {/* No tab selection for full day booking */}
-      
       <div className="mb-4">
-        <label className="block text-gray-700 mb-1 text-sm font-medium mt-4"></label>
+        <label className="block text-gray-700 mb-1 text-sm font-medium mt-4">Select Slot</label>
         {!date ? (
           <div className="text-center py-8 text-gray-500">
             <p className="text-sm">Please select a date from the calendar above to choose your time slot</p>
@@ -67,10 +66,10 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   disabled={isBooked}
                   onClick={() => {
                     if (isBooked) return;
-                      if (isSelected) {
-                        setSelectedSlots([]);
-                      } else {
-                        setSelectedSlots([idx]);
+                    if (isSelected) {
+                      setSelectedSlots([]);
+                    } else {
+                      setSelectedSlots([idx]);
                     }
                   }}
                   className={`w-full flex items-center justify-between px-4 py-4 rounded-lg border transition-colors min-h-[64px]
@@ -83,13 +82,45 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   <span className="text-sm font-semibold">₹{slot.price.toLocaleString()}</span>
                   {isBooked && <span className="ml-2 text-xs text-red-500 font-bold">Booked</span>}
                   {isSelected && !isBooked && <span className="ml-2 text-xs text-green-200">Selected</span>}
-                  {isSelected && isBooked && <span className="ml-2 text-xs text-red-600 font-bold">Selected</span>}
                 </button>
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Night Option Toggle */}
+      {date && selectedSlots.length > 0 && setIncludeNight && (
+        <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-semibold text-gray-900">Night Stay</h4>
+              <p className="text-sm text-gray-600">Add overnight accommodation</p>
+              {nightPrice > 0 && (
+                <p className="text-sm font-medium text-indigo-600 mt-1">+₹{nightPrice.toLocaleString()}</p>
+              )}
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeNight}
+                onChange={(e) => setIncludeNight(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600"></div>
+              <span className="ms-3 text-sm font-medium text-gray-700">{includeNight ? 'Yes' : 'No'}</span>
+            </label>
+          </div>
+          {includeNight && totalAmount > 0 && (
+            <div className="mt-3 pt-3 border-t border-indigo-200">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Total with Night:</span>
+                <span className="font-bold text-indigo-700">₹{totalAmount.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Customer Details Section - Only show in edit mode */}
       {isEditMode && editingBooking && (
@@ -123,37 +154,25 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 readOnly
               />
             </div>
-            
           </div>
         </div>
       )}
 
+      {/* Remarks/Notes field */}
       <div className="mb-4">
-        <label className="block text-gray-700 mb-1 text-sm font-medium">Occasion Type</label>
-        <select
-          value={occasion}
-          onChange={e => setOccasion(e.target.value)}
-          className="w-full border rounded-lg px-3 py-3 border-[#E5E7EB] outline-none focus:ring-2 focus:ring-blue-200 text-black placeholder:text-gray-400"
-        >
-          <option value="">Select occasion type</option>
-                            {occasionTypes.map((type: string) => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Utility type removed */}
-      
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-1 text-sm font-medium">Notes <span className="text-gray-400">(Optional)</span></label>
+        <label className="block text-gray-700 mb-1 text-sm font-medium">Remarks <span className="text-gray-400">(Optional)</span></label>
         <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          placeholder="Add any special requirements..."
-          className="w-full border rounded-lg px-3 py-3 border-[#E5E7EB] outline-none focus:ring-2 focus:ring-blue-200 min-h-[48px] text-black placeholder:text-gray-400"
+          value={occasion || notes}
+          onChange={e => {
+            setOccasion(e.target.value);
+            setNotes(e.target.value);
+          }}
+          placeholder="Add event details, special requirements, or notes..."
+          className="w-full border rounded-lg px-3 py-3 border-[#E5E7EB] outline-none focus:ring-2 focus:ring-blue-200 min-h-[80px] text-black placeholder:text-gray-400"
+          maxLength={500}
         />
+        <p className="text-xs text-gray-400 mt-1">Max 500 characters</p>
       </div>
-
     </>
   );
 };

@@ -7,13 +7,20 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../context/BookingContext';
 import { useBookingData, Booking } from '../../components/booking/BookingDataProvider';
-import { createBookingRequest, getSlots } from '@/lib/api';
+import { createBookingRequest, getSlots, getSlotPricing, calculateTotalAmount } from '@/lib/api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';
 import PersonalPaymentForm from '../../components/booking/PersonalPaymentForm';
 import BookingDetailsModal from './BookingDetailsModal';
 import type { BookingDetails as ModalBookingDetails } from './BookingDetailsModal';
+
+interface SlotPricing {
+  slot_name: string;
+  current_price: number;
+  future_price: number | null;
+  effective_from: string | null;
+}
 
 export default function BookingPage() {
   const router = useRouter();
@@ -27,8 +34,8 @@ export default function BookingPage() {
   }, [router]);
   // Fallback slots if backend not available
   const fallbackTimeSlots = [
-    { id: 1, label: 'Lunch Time', time: '9:00 AM - 4:00 PM', price: 40000 },
-    { id: 2, label: 'Dinner Time', time: '6:00 PM - 10:00 PM', price: 40000 },
+    { id: 1, label: 'Lunch', time: 'Lunch', price: 40000 },
+    { id: 2, label: 'Reception', time: 'Reception', price: 40000 },
   ];
   interface Slot {
     id: number;
@@ -37,7 +44,17 @@ export default function BookingPage() {
     price: number;
   }
   const [allSlots, setAllSlots] = useState<Slot[]>([]); // All slots from backend
+  const [slotPricing, setSlotPricing] = useState<SlotPricing[]>([]);
   const timeSlots: Slot[] = allSlots.length > 0 ? allSlots : fallbackTimeSlots;
+
+  // Night option state
+  const [includeNight, setIncludeNight] = useState(false);
+  const [nightPrice, setNightPrice] = useState(15000);
+  const [calculatedTotal, setCalculatedTotal] = useState(0);
+  
+  // Utensil and Remarks state
+  const [utensil, setUtensil] = useState('');
+  const [remarks, setRemarks] = useState('');
 
   // Helper function to format date as local date (matches backend storage)
   const formatDateForComparison = (date: Date) => {
@@ -78,25 +95,65 @@ export default function BookingPage() {
     }
   }, [currentStep]);
 
-  // Fetch all slots and apply locally configured rates from Settings
+  // Fetch slot pricing from backend
+  useEffect(() => {
+    async function fetchPricing() {
+      try {
+        const pricing = await getSlotPricing();
+        setSlotPricing(pricing || []);
+        // Get night price
+        const nightPricing = pricing?.find((p: SlotPricing) => p.slot_name === 'Night');
+        if (nightPricing) {
+          setNightPrice(nightPricing.current_price || 15000);
+        }
+      } catch (err) {
+        console.error('Error fetching pricing:', err);
+      }
+    }
+    fetchPricing();
+  }, []);
+
+  // Calculate total when slot or night option changes
+  useEffect(() => {
+    if (date && selectedSlots.length > 0) {
+      const calculatePrice = async () => {
+        try {
+          const slot = timeSlots[selectedSlots[0]];
+          if (slot) {
+            const slotName = slot.label.includes('Lunch') ? 'Lunch' : 'Reception';
+            const dateStr = formatDateForComparison(date);
+            const result = await calculateTotalAmount(slotName, dateStr, includeNight);
+            setCalculatedTotal(result.totalAmount || 0);
+            if (result.nightPrice) {
+              setNightPrice(result.nightPrice);
+            }
+          }
+        } catch {
+          // Fallback calculation
+          const basePrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
+          setCalculatedTotal(basePrice + (includeNight ? nightPrice : 0));
+        }
+      };
+      calculatePrice();
+    }
+  }, [date, selectedSlots, includeNight, timeSlots, nightPrice]);
+
+  // Fetch all slots and apply pricing from backend
   useEffect(() => {
     async function fetchSlots() {
       try {
         const slots = await getSlots('');
         let resolved = slots as Slot[];
-        if (typeof window !== 'undefined') {
-          const raw = localStorage.getItem('slotRates');
-          if (raw) {
-            try {
-              const cfg = JSON.parse(raw) as { lunchPrice?: number; dinnerPrice?: number; receptionPrice?: number };
-              resolved = (slots as Slot[]).map((s) => {
-                if (/lunch/i.test(s.label)) return { ...s, price: cfg.lunchPrice ?? s.price };
-                // Backward compatibility: treat "Reception" as "Dinner"
-                if (/dinner|reception/i.test(s.label)) return { ...s, price: (cfg.dinnerPrice ?? cfg.receptionPrice) ?? s.price };
-                return s;
-              });
-            } catch {}
-          }
+        // Apply pricing from backend if available
+        if (slotPricing.length > 0) {
+          resolved = resolved.map((s) => {
+            const pricing = slotPricing.find((p: SlotPricing) => 
+              p.slot_name.toLowerCase() === s.label.toLowerCase() ||
+              (s.label.includes('Lunch') && p.slot_name === 'Lunch') ||
+              (s.label.includes('Reception') && p.slot_name === 'Reception')
+            );
+            return pricing ? { ...s, price: pricing.current_price } : s;
+          });
         }
         setAllSlots(resolved);
       } catch {
@@ -405,6 +462,8 @@ export default function BookingPage() {
             bride_name: brideName,
             address: address,
             payment_type: paymentType,
+            include_night: includeNight,
+            total_amount: calculatedTotal || slotPrice,
           });
         }
         await fetchBookings(); // Refresh bookings after successful booking
@@ -642,9 +701,12 @@ export default function BookingPage() {
                 setAdvanceAmount={setAdvanceAmount}
                 paymentMode={paymentMode}
                 setPaymentMode={setPaymentMode}
-                totalAmount={slotPrice}
+                totalAmount={calculatedTotal || slotPrice}
                 minAdvance={minAdvance}
                 isEditMode={isPersonalEditMode}
+                includeNight={includeNight}
+                setIncludeNight={setIncludeNight}
+                nightPrice={nightPrice}
               />
             )}
             {/* Cancel Button - Only show in edit mode */}

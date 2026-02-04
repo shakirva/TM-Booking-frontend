@@ -123,6 +123,46 @@ export const getDashboardSummary = async (token: string) => {
   return res.data;
 };
 
+// Get upcoming events for dashboard
+export const getUpcomingEvents = async (token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.get(`${API_URL}/dashboard/upcoming-events`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
+// Slot Pricing APIs
+export const getSlotPricing = async () => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.get(`${API_URL}/bookings/pricing`);
+  return res.data;
+};
+
+export const getSlotPriceForDate = async (slotName: string, eventDate: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.get(`${API_URL}/bookings/pricing/${slotName}?eventDate=${eventDate}`);
+  return res.data;
+};
+
+export const calculateTotalAmount = async (slotName: string, eventDate: string, includeNight: boolean) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.post(`${API_URL}/bookings/calculate-total`, {
+    slotName,
+    eventDate,
+    includeNight
+  });
+  return res.data;
+};
+
+export const updateSlotPricing = async (slotName: string, pricing: { current_price: number; future_price?: number; effective_from?: string }, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.put(`${API_URL}/bookings/pricing/${slotName}`, pricing, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 export const deleteBooking = async (id: string, token: string) => {
   if (!API_URL) throw new Error('API base URL not configured');
   const res = await axios.delete(`${API_URL}/bookings/requests/${id}`, {
