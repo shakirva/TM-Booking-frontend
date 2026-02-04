@@ -26,8 +26,10 @@ interface BookingFormProps {
 const BookingForm: React.FC<BookingFormProps> = ({
   selectedSlots,
   setSelectedSlots,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   occasion,
   setOccasion,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   notes,
   setNotes,
   timeSlots,

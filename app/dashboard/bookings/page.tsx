@@ -6,6 +6,7 @@ import Modal from 'react-modal';
 import { getRequests, deleteBooking, updateBooking as apiUpdateBooking } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
+import BookingDetailsModal from '@/app/booking/BookingDetailsModal';
 
 type Booking = {
   id: number;

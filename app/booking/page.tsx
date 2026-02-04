@@ -53,6 +53,7 @@ export default function BookingPage() {
   const [calculatedTotal, setCalculatedTotal] = useState(0);
   
   // Utensil and Remarks state
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [utensil, setUtensil] = useState('');
   const [remarks, setRemarks] = useState('');
 
