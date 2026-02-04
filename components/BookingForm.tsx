@@ -165,9 +165,9 @@ const BookingForm: React.FC<BookingFormProps> = ({
             onChange={e => setRemarks(e.target.value)}
             placeholder="Add event details, special requirements, or notes..."
             className="w-full border rounded-lg px-3 py-3 border-[#E5E7EB] outline-none focus:ring-2 focus:ring-blue-200 min-h-[80px] text-black placeholder:text-gray-400"
-            maxLength={500}
+            maxLength={150}
           />
-          <p className="text-xs text-gray-400 mt-1">Max 500 characters</p>
+          <p className="text-xs text-gray-400 mt-1">Max 150 characters</p>
         </div>
       )}
     </>
