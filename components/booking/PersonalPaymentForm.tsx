@@ -332,6 +332,7 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                   placeholder={typeof minAdvance === 'number' ? `Minimum ₹${minAdvance.toLocaleString()}` : 'Minimum ₹10,000'}
                   value={advanceAmount}
                   onChange={e => setAdvanceAmount(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
                   className={isReadOnly ? paymentReadOnlyClassName : paymentInputClassName}
                   disabled={paymentType !== 'advance' || isReadOnly}
                   required={paymentType === 'advance'}

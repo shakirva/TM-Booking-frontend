@@ -80,10 +80,7 @@ export default function BookingPage() {
   // Initialize date after component mounts to prevent hydration mismatch
   useEffect(() => {
     setIsClient(true);
-    if (booking?.slot?.date) {
-      setDate(new Date(booking.slot.date));
-    }
-  }, [booking?.slot?.date]);
+  }, []);
 
   // When we navigate to Personal & Payment step, scroll the page to the heading
   useEffect(() => {
@@ -149,8 +146,9 @@ export default function BookingPage() {
           resolved = resolved.map((s) => {
             const pricing = slotPricing.find((p: SlotPricing) => 
               p.slot_name.toLowerCase() === s.label.toLowerCase() ||
-              (s.label.includes('Lunch') && p.slot_name === 'Lunch') ||
-              (s.label.includes('Reception') && p.slot_name === 'Reception')
+              (s.label.toLowerCase().includes('lunch') && p.slot_name === 'Lunch') ||
+              (s.label.toLowerCase().includes('dinner') && p.slot_name === 'Reception') ||
+              (s.label.toLowerCase().includes('reception') && p.slot_name === 'Reception')
             );
             return pricing ? { ...s, price: pricing.current_price } : s;
           });
@@ -159,23 +157,17 @@ export default function BookingPage() {
       } catch {
         // Fallback to defaults and also try to apply local overrides
         let fallback: Slot[] = [
-          { id: 1, label: 'Lunch Time', time: '9:00 AM - 4:00 PM', price: 40000 },
-          { id: 2, label: 'Dinner Time', time: '6:00 PM - 10:00 PM', price: 40000 },
+          { id: 1, label: 'Lunch', time: '9:00 AM - 4:00 PM', price: 40000 },
+          { id: 2, label: 'Reception', time: '6:00 PM - 10:00 PM', price: 40000 },
         ];
-        if (typeof window !== 'undefined') {
-          const raw = localStorage.getItem('slotRates');
-          if (raw) {
-            try {
-              const cfg = JSON.parse(raw) as { lunchPrice?: number; dinnerPrice?: number; receptionPrice?: number };
-              fallback = fallback.map((s) =>
-                /lunch/i.test(s.label)
-                  ? { ...s, price: cfg.lunchPrice ?? s.price }
-                  : /dinner|reception/i.test(s.label)
-                  ? { ...s, price: (cfg.dinnerPrice ?? cfg.receptionPrice) ?? s.price }
-                  : s
-              );
-            } catch {}
-          }
+        // Apply pricing from slotPricing if available
+        if (slotPricing.length > 0) {
+          fallback = fallback.map((s) => {
+            const pricing = slotPricing.find((p: SlotPricing) => 
+              p.slot_name.toLowerCase() === s.label.toLowerCase()
+            );
+            return pricing ? { ...s, price: pricing.current_price } : s;
+          });
         }
         setAllSlots(fallback);
       }
@@ -183,31 +175,27 @@ export default function BookingPage() {
     fetchSlots();
     // Also ensure bookings are fetched on first visit after login
     fetchBookings();
-  }, [fetchBookings]);
+  }, [fetchBookings, slotPricing]);
 
-  const [occasion, setOccasion] = useState(booking?.slot?.occasion ?? '');
+  const [occasion, setOccasion] = useState('');
   // utility removed
-  const [notes, setNotes] = useState(booking?.slot?.notes ?? '');
+  const [notes, setNotes] = useState('');
   const [selectedDateBookings, setSelectedDateBookings] = useState<Booking[]>([]);
   const [editingBooking, setEditingBooking] = useState<Booking | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // Personal details state
-  const [customerName, setCustomerName] = useState(booking?.personal?.customerName ?? '');
-  const [customerPhone, setCustomerPhone] = useState(booking?.personal?.phone1 ?? '');
-  const [customerPhone2, setCustomerPhone2] = useState(booking?.personal?.phone2 ?? '');
-  const [groomName, setGroomName] = useState(booking?.personal?.groomName ?? '');
-  const [brideName, setBrideName] = useState(booking?.personal?.brideName ?? '');
-  const [address, setAddress] = useState(booking?.personal?.address ?? '');
+  // Personal details state - always start fresh
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [customerPhone2, setCustomerPhone2] = useState('');
+  const [groomName, setGroomName] = useState('');
+  const [brideName, setBrideName] = useState('');
+  const [address, setAddress] = useState('');
 
-  // Payment details state
-  const validPaymentTypes = ['advance', 'full'] as const;
-  const validPaymentModes = ['bank', 'cash', 'upi'] as const;
-  const initialPaymentType = validPaymentTypes.includes(booking?.payment?.paymentType as 'advance' | 'full') ? booking?.payment?.paymentType as 'advance' | 'full' : 'advance';
-  const initialPaymentMode = validPaymentModes.includes(booking?.payment?.paymentMode as 'bank' | 'cash' | 'upi') ? booking?.payment?.paymentMode as 'bank' | 'cash' | 'upi' : 'bank';
-  const [paymentType, setPaymentType] = useState<'advance' | 'full'>(initialPaymentType);
-  const [advanceAmount, setAdvanceAmount] = useState(booking?.payment?.advanceAmount ?? '');
-  const [paymentMode, setPaymentMode] = useState<'bank' | 'cash' | 'upi'>(initialPaymentMode);
+  // Payment details state - always start fresh
+  const [paymentType, setPaymentType] = useState<'advance' | 'full'>('advance');
+  const [advanceAmount, setAdvanceAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState<'bank' | 'cash' | 'upi'>('bank');
 
   const today = new Date();
   // Calculate total slot price dynamically based on selected slots
@@ -347,10 +335,6 @@ export default function BookingPage() {
         alert('Please select a date');
         return;
       }
-      if (!occasion.trim()) {
-        alert('Please enter an occasion');
-        return;
-      }
       if (!selectedSlots.length) {
         alert('Please select at least one slot');
         return;
@@ -413,6 +397,7 @@ export default function BookingPage() {
       // Validate payment details
       if (paymentType === 'advance') {
         const advance = parseInt(advanceAmount, 10);
+        const totalForValidation = calculatedTotal || slotPrice || 40000; // Fallback to default if not calculated
         if (Number.isNaN(advance)) {
           alert('Please enter advance amount');
           return;
@@ -421,7 +406,7 @@ export default function BookingPage() {
           alert(`Advance amount must be at least ₹${minAdvance.toLocaleString()}`);
           return;
         }
-        if (advance > slotPrice) {
+        if (advance > totalForValidation) {
           alert('Advance amount cannot exceed total amount');
           return;
         }
@@ -462,8 +447,10 @@ export default function BookingPage() {
             bride_name: brideName,
             address: address,
             payment_type: paymentType,
-            include_night: includeNight,
+            night: includeNight ? 'Yes' : 'No',
             total_amount: calculatedTotal || slotPrice,
+            remarks: remarks,
+            utensil: utensil,
           });
         }
         await fetchBookings(); // Refresh bookings after successful booking
@@ -588,7 +575,7 @@ export default function BookingPage() {
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-part"></div>
-                      <span>Dinner Booked</span>
+                      <span>Reception Booked</span>
                     </div>
                     <div className="calendar-legend-item">
                       <div className="calendar-legend-dot booked-full"></div>
@@ -629,19 +616,22 @@ export default function BookingPage() {
                       setSelectedSlots={setSelectedSlots}
                       occasion={occasion}
                       setOccasion={setOccasion}
-                      // utility prop removed
-                      // setUtility prop removed
                       notes={notes}
                       setNotes={setNotes}
                       timeSlots={timeSlots}
                       date={date}
                       isEditMode={isEditMode}
                       editingBooking={editingBooking}
-                      // Mark slots as booked if their slot_id is in bookedSlotIds
                       bookedTimes={(() => {
                         const bookedSlotIds = getBookedSlotIdsForDate(date);
                         return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
                       })()}
+                      includeNight={includeNight}
+                      setIncludeNight={setIncludeNight}
+                      nightPrice={nightPrice}
+                      totalAmount={calculatedTotal || slotPrice}
+                      remarks={remarks}
+                      setRemarks={setRemarks}
                     />
                   </section>
                 )}

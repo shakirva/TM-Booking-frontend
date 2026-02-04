@@ -2,7 +2,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getToken } from "@/lib/auth";
 import { formatDateDMY } from "@/lib/date";
-import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrendingUp, FiPieChart, FiBarChart2 } from "react-icons/fi";
+import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrendingUp, FiPieChart, FiBarChart2, FiTrash2 } from "react-icons/fi";
+import { deleteBooking } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -580,12 +581,13 @@ export default function ReportsPage() {
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Utensil</th>
                 <th className="py-3 px-4 text-right font-semibold text-gray-700">Final Pay</th>
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Remarks</th>
+                <th className="py-3 px-4 text-center font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {data?.bookings.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="py-8 text-center text-gray-400">
+                  <td colSpan={11} className="py-8 text-center text-gray-400">
                     No bookings found. Adjust your filters or create new bookings.
                   </td>
                 </tr>
@@ -621,6 +623,27 @@ export default function ReportsPage() {
                   </td>
                   <td className="py-3 px-4 text-gray-500 max-w-[150px] truncate" title={booking.remarks || ''}>
                     {booking.remarks || '-'}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center justify-center">
+                      <button
+                        className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Booking"
+                        onClick={async () => {
+                          if (!window.confirm('Are you sure you want to delete this booking?')) return;
+                          const token = getToken();
+                          if (!token) return;
+                          try {
+                            await deleteBooking(String(booking.id), token);
+                            fetchReports();
+                          } catch {
+                            alert('Failed to delete booking.');
+                          }
+                        }}
+                      >
+                        <FiTrash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
