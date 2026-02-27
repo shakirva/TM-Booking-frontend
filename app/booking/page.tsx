@@ -276,19 +276,28 @@ export default function BookingPage() {
     } else {
       const dateString = formatDateForComparison(new Date(day.getFullYear(), day.getMonth(), day.getDate()));
       const bookings = getBookingsByDate(dateString);
+      
+      // Check which slots are booked by looking at time/slotTime field
+      // The backend stores 'Lunch' or 'Reception' as the time value
       type BookingLike = Partial<Booking> & { time?: string; slotTime?: string };
-      const times = (bookings || []).map((b: BookingLike) => b.time ?? b.slotTime ?? '');
-      const lunchBooked = !!timeSlots[0] && times.includes(timeSlots[0].time);
-      const receptionBooked = !!timeSlots[1] && times.includes(timeSlots[1].time);
-      const count = times.filter(Boolean).length;
+      const bookedSlots = (bookings || []).map((b: BookingLike) => {
+        const slotValue = (b.time ?? b.slotTime ?? '').toLowerCase();
+        return slotValue;
+      });
+      
+      const lunchBooked = bookedSlots.some(s => s.includes('lunch'));
+      const receptionBooked = bookedSlots.some(s => s.includes('reception') || s.includes('dinner'));
 
-      // New rule:
-      // - Red (booked-full-date) when Reception is booked.
-      // - Yellow (booked-part-date) when Lunch is booked OR when both are booked.
+      // Color rules:
+      // - Red (booked-full-date) when Reception is booked (but not Lunch)
+      // - Yellow (booked-part-date) when Lunch is booked (with or without Reception)
       if (receptionBooked && !lunchBooked) {
+        classes.push('booked-full-date'); // Red for Reception only
+      } else if (lunchBooked) {
+        classes.push('booked-part-date'); // Yellow for Lunch (or both)
+      } else if (bookings.length > 0) {
+        // Fallback: if there are bookings but no match, show as booked
         classes.push('booked-full-date');
-      } else if (lunchBooked || (lunchBooked && receptionBooked) || count >= 2) {
-        classes.push('booked-part-date');
       } else if (isDateAvailable(day)) {
         classes.push('available-date');
       }
