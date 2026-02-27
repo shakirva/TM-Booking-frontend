@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode, Dispatch, SetStateAction } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, Dispatch, SetStateAction } from "react";
 import * as api from '@/lib/api';
 import { getToken } from '@/lib/auth';
 
@@ -96,7 +96,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
   // Fetch bookings from backend (use booking requests, not slots)
-  const fetchBookings = async () => {
+  const fetchBookings = useCallback(async () => {
     const token = getToken();
     if (!token) return;
     try {
@@ -113,7 +113,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       console.error('[BookingDataProvider] Error fetching bookings:', err);
     }
-  };
+  }, []);
 
   // Create a new booking slot (for staff)
   const createBooking = async (bookingData: Record<string, unknown>) => {

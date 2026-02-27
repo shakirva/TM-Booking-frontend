@@ -112,11 +112,17 @@ export default function BookingPage() {
   }, []);
 
   // Calculate total when slot or night option changes
+  // Using refs to avoid dependency loops
+  const timeSlotsRef = useRef(timeSlots);
+  const nightPriceRef = useRef(nightPrice);
+  timeSlotsRef.current = timeSlots;
+  nightPriceRef.current = nightPrice;
+
   useEffect(() => {
     if (date && selectedSlots.length > 0) {
       const calculatePrice = async () => {
         try {
-          const slot = timeSlots[selectedSlots[0]];
+          const slot = timeSlotsRef.current[selectedSlots[0]];
           if (slot) {
             const slotName = slot.label.includes('Lunch') ? 'Lunch' : 'Reception';
             const dateStr = formatDateForComparison(date);
@@ -128,13 +134,13 @@ export default function BookingPage() {
           }
         } catch {
           // Fallback calculation
-          const basePrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
-          setCalculatedTotal(basePrice + (includeNight ? nightPrice : 0));
+          const basePrice = selectedSlots.reduce((sum, idx) => sum + (timeSlotsRef.current[idx]?.price || 0), 0);
+          setCalculatedTotal(basePrice + (includeNight ? nightPriceRef.current : 0));
         }
       };
       calculatePrice();
     }
-  }, [date, selectedSlots, includeNight, timeSlots, nightPrice]);
+  }, [date, selectedSlots, includeNight]);
 
   // Fetch all slots and apply pricing from backend
   useEffect(() => {
@@ -174,9 +180,13 @@ export default function BookingPage() {
       }
     }
     fetchSlots();
-    // Also ensure bookings are fetched on first visit after login
+  }, [slotPricing]);
+
+  // Fetch bookings once on mount
+  useEffect(() => {
     fetchBookings();
-  }, [fetchBookings, slotPricing]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [occasion, setOccasion] = useState('');
   // utility removed
