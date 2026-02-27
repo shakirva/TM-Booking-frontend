@@ -658,9 +658,10 @@ export default function BookingPage() {
                   slotTime: details.time || '',
                   paymentType: details.payment_mode === 'advance' ? 'advance' : 'full',
                   advanceAmount: details.advance_amount || details.advanceAmount || '',
-                  paymentMode: (['bank', 'cash', 'upi'].includes((details.payment_mode || details.paymentMode) as string)
-                    ? (details.payment_mode || details.paymentMode)
-                    : 'cash') as 'bank' | 'cash' | 'upi',
+                  paymentMode: (() => {
+                    const mode = ((details.payment_mode || details.paymentMode) as string || '').toLowerCase();
+                    return (['bank', 'cash', 'upi'].includes(mode) ? mode : 'cash') as 'bank' | 'cash' | 'upi';
+                  })(),
                   price: 0,
                   notes: details.details || details.notes || '',
                   createdAt: '',
@@ -746,7 +747,7 @@ export default function BookingPage() {
                 slot_id,
                 details: editingBooking.notes,
                 occasion_type: editingBooking.occasion,
-                payment_mode: editingBooking.paymentMode,
+                payment_mode: (editingBooking.paymentMode || '').toLowerCase(),
                 advance_amount: editingBooking.advanceAmount,
                 date: editingBooking.date,
                 time: selectedSlot.time,
