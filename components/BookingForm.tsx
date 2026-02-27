@@ -79,7 +79,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
               const isBooked = (bookedTimes || []).includes(slot.time);
               return (
                 <option key={slot.label} value={idx} disabled={isBooked}>
-                  {slot.label} ({slot.time}) - ₹{slot.price.toLocaleString()} {isBooked ? '(Booked)' : ''}
+                  {slot.label} - ₹{slot.price.toLocaleString()} {isBooked ? '(Booked)' : ''}
                 </option>
               );
             })}
@@ -92,7 +92,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
         <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
           <div className="flex items-center justify-between">
             <div>
-              <h4 className="font-semibold text-gray-900">Night Stay</h4>
+              <h4 className="font-semibold text-gray-900">Night Prior Date</h4>
               <p className="text-sm text-gray-600">Add overnight accommodation</p>
               {nightPrice > 0 && (
                 <p className="text-sm font-medium text-indigo-600 mt-1">+₹{nightPrice.toLocaleString()}</p>

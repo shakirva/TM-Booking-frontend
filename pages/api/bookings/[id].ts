@@ -18,9 +18,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!BACKEND_BASE) {
         return res.status(500).json({ message: 'Backend URL not configured. Set BACKEND_URL or NEXT_PUBLIC_API_URL env.' });
       }
-      // Forward PUT request to backend, no token required
+      // Forward PUT request to backend with authorization token
+      const authHeader = req.headers.authorization;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (authHeader) {
+        headers['Authorization'] = authHeader;
+      }
       const response = await axios.put(`${BACKEND_BASE}/api/bookings/requests/${id}`, req.body, {
-        headers: { 'Content-Type': 'application/json' }
+        headers
       });
       res.status(response.status).json(response.data);
     } catch (err: unknown) {

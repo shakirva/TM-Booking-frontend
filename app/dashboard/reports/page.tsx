@@ -36,6 +36,7 @@ interface ReportsSummary {
   total_revenue: number;
   total_advance: number;
   avg_booking_value: number;
+  total_balance?: number;
 }
 
 interface ReportsData {
@@ -209,8 +210,8 @@ export default function ReportsPage() {
                 <div class="label">Total Advance</div>
               </div>
               <div class="summary-item">
-                <div class="value">₹${Math.round(data.summary.avg_booking_value || 0).toLocaleString()}</div>
-                <div class="label">Avg. Booking Value</div>
+                <div class="value">₹${((data.summary.total_revenue || 0) - (data.summary.total_advance || 0)).toLocaleString()}</div>
+                <div class="label">Total Balance</div>
               </div>
             </div>
           ` : ''}
@@ -524,9 +525,9 @@ export default function ReportsPage() {
           </div>
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-4 text-white">
             <div className="flex items-center gap-2 opacity-80 text-sm mb-1">
-              Avg. Booking
+              Total Balance
             </div>
-            <div className="text-2xl font-bold">₹{Math.round(data.summary.avg_booking_value || 0).toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{((data.summary.total_revenue || 0) - (data.summary.total_advance || 0)).toLocaleString()}</div>
           </div>
         </div>
       )}

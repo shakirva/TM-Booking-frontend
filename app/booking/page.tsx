@@ -273,11 +273,11 @@ export default function BookingPage() {
       const count = times.filter(Boolean).length;
 
       // New rule:
-      // - Red (booked-full-date) when Lunch time is booked (even if only one slot is booked).
-      // - Yellow (booked-part-date) when Reception is booked OR when both are booked.
-      if (lunchBooked && !receptionBooked) {
+      // - Red (booked-full-date) when Reception is booked.
+      // - Yellow (booked-part-date) when Lunch is booked OR when both are booked.
+      if (receptionBooked && !lunchBooked) {
         classes.push('booked-full-date');
-      } else if (receptionBooked || (lunchBooked && receptionBooked) || count >= 2) {
+      } else if (lunchBooked || (lunchBooked && receptionBooked) || count >= 2) {
         classes.push('booked-part-date');
       } else if (isDateAvailable(day)) {
         classes.push('available-date');
@@ -575,11 +575,11 @@ export default function BookingPage() {
                       <span>Available</span>
                     </div>
                     <div className="calendar-legend-item">
-                      <div className="calendar-legend-dot booked-part"></div>
+                      <div className="calendar-legend-dot booked-full"></div>
                       <span>Reception Booked</span>
                     </div>
                     <div className="calendar-legend-item">
-                      <div className="calendar-legend-dot booked-full"></div>
+                      <div className="calendar-legend-dot booked-part"></div>
                       <span>Lunch Booked</span>
                     </div>
                   </div>
@@ -759,9 +759,14 @@ export default function BookingPage() {
                 payment_type: editingBooking.paymentType,
               };
               try {
+                const token = getToken();
+                const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                if (token) {
+                  headers['Authorization'] = `Bearer ${token}`;
+                }
                 const response = await fetch(`/api/bookings/${editingBooking.id}`, {
                   method: 'PUT',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers,
                   body: JSON.stringify(payload),
                 });
                 if (response.ok) {
@@ -790,16 +795,8 @@ export default function BookingPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-black mb-2">Occasion</label>
-                  <select value={editingBooking.occasion} onChange={e => setEditingBooking({ ...editingBooking, occasion: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
-                    <option value="">Select Occasion</option>
-                    <option value="Wedding Reception">Wedding Reception</option>
-                    <option value="Birthday">Birthday</option>
-                    <option value="Engagement">Engagement</option>
-                    <option value="Anniversary">Anniversary</option>
-                    <option value="Corporate Event">Corporate Event</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <label className="block text-sm font-semibold text-black mb-2">Phone 2</label>
+                  <input type="text" value={editingBooking.customerPhone2 || ''} onChange={e => setEditingBooking({ ...editingBooking, customerPhone2: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Address</label>
@@ -865,11 +862,11 @@ export default function BookingPage() {
                         <span>Available</span>
                       </div>
                       <div className="calendar-legend-item">
-                        <div className="calendar-legend-dot booked-part"></div>
-                        <span>Dinner Booked</span>
+                        <div className="calendar-legend-dot booked-full"></div>
+                        <span>Reception Booked</span>
                       </div>
                       <div className="calendar-legend-item">
-                        <div className="calendar-legend-dot booked-full"></div>
+                        <div className="calendar-legend-dot booked-part"></div>
                         <span>Lunch Booked</span>
                       </div>
                     </div>
@@ -881,13 +878,14 @@ export default function BookingPage() {
                 <select value={editingBooking.timeSlot || ''} onChange={e => setEditingBooking({ ...editingBooking, timeSlot: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
                   <option value="" disabled>Select Slot</option>
                   {timeSlots.map(slot => (
-                    <option key={slot.id} value={slot.label}>{slot.label} ({slot.time})</option>
+                    <option key={slot.id} value={slot.label}>{slot.label}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-black mb-2">Notes</label>
-                <textarea value={editingBooking.notes} onChange={e => setEditingBooking({ ...editingBooking, notes: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" rows={2} />
+                <label className="block text-sm font-semibold text-black mb-2">Remarks</label>
+                <textarea value={editingBooking.notes} onChange={e => setEditingBooking({ ...editingBooking, notes: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white" rows={2} maxLength={150} />
+                <p className="text-xs text-gray-400 mt-1">Max 150 characters</p>
               </div>
               <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-4 mt-6 sm:mt-8 sm:justify-end">
                 <button type="button" className="bg-gray-200 text-black py-2 px-5 rounded hover:bg-gray-300 font-semibold" onClick={() => { setIsEditMode(false); setEditingBooking(null); }}>Cancel</button>
