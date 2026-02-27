@@ -7,7 +7,7 @@ import { IoIosArrowBack } from "react-icons/io";
 import { useRouter } from 'next/navigation';
 import { useBooking } from '../context/BookingContext';
 import { useBookingData, Booking } from '../../components/booking/BookingDataProvider';
-import { createBookingRequest, getSlots, getSlotPricing, calculateTotalAmount } from '@/lib/api';
+import { createBookingRequest, getSlots, getSlotPricing, calculateTotalAmount, updateBooking as updateBookingApi } from '@/lib/api';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import BookingForm from '../../components/BookingForm';
@@ -771,27 +771,19 @@ export default function BookingPage() {
               };
               try {
                 const token = getToken();
-                const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                if (token) {
-                  headers['Authorization'] = `Bearer ${token}`;
+                if (!token) {
+                  setSubmitError('Please login to update booking.');
+                  return;
                 }
-                const response = await fetch(`/api/bookings/${editingBooking.id}`, {
-                  method: 'PUT',
-                  headers,
-                  body: JSON.stringify(payload),
-                });
-                if (response.ok) {
-                  setSubmitError(null);
-                  alert('Booking updated successfully!');
-                  setIsEditMode(false);
-                  setEditingBooking(null);
-                  await fetchBookings();
-                } else {
-                  const errorData = await response.json();
-                  setSubmitError(errorData.message || 'Failed to update booking.');
-                }
-              } catch {
-                setSubmitError('Failed to update booking.');
+                await updateBookingApi(String(editingBooking.id), payload, token);
+                setSubmitError(null);
+                alert('Booking updated successfully!');
+                setIsEditMode(false);
+                setEditingBooking(null);
+                await fetchBookings();
+              } catch (err: unknown) {
+                const errorMessage = err instanceof Error ? err.message : 'Failed to update booking.';
+                setSubmitError(errorMessage);
               }
             }}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
