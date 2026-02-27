@@ -65,11 +65,13 @@ export const login = async (username: string, password: string) => {
   return res.data;
 };
 
-export const getSlots = async (token: string) => {
+export const getSlots = async (token?: string) => {
   if (!API_URL) throw new Error('API base URL not configured');
-  const res = await axios.get(`${API_URL}/bookings/slots`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  const res = await axios.get(`${API_URL}/bookings/slots`, { headers });
   return res.data;
 };
 
