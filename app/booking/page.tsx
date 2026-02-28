@@ -885,9 +885,29 @@ export default function BookingPage() {
                           const y = val.getFullYear();
                           const m = String(val.getMonth() + 1).padStart(2, '0');
                           const d = String(val.getDate()).padStart(2, '0');
+                          const newDateStr = `${y}-${m}-${d}`;
+                          
+                          // Check if the selected slot is already booked on this new date
+                          const selectedSlot = timeSlots.find(slot => slot.label === editingBooking.timeSlot) || timeSlots[0];
+                          const existingBookingsOnNewDate = getBookingsByDate(newDateStr);
+                          const slotConflict = existingBookingsOnNewDate.some((b) => {
+                            // Skip the current booking being edited
+                            if (String(b.id) === String(editingBooking.id)) return false;
+                            const rawB = b as unknown as { time?: string; slotTime?: string };
+                            const bookedSlot = (rawB.time ?? b.slotTime ?? '').toLowerCase();
+                            const selectedSlotName = selectedSlot.label.toLowerCase();
+                            return bookedSlot.includes(selectedSlotName) || selectedSlotName.includes(bookedSlot);
+                          });
+                          
+                          if (slotConflict) {
+                            setSubmitError(`${selectedSlot.label} is already booked on ${newDateStr}. Please select a different date or change the slot.`);
+                          } else {
+                            setSubmitError(null);
+                          }
+                          
                           setEditingBooking({
                             ...editingBooking,
-                            date: `${y}-${m}-${d}`
+                            date: newDateStr
                           });
                         }
                       }}
@@ -925,7 +945,22 @@ export default function BookingPage() {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-black mb-2">Slot</label>
-                <select value={editingBooking.timeSlot || ''} onChange={e => setEditingBooking({ ...editingBooking, timeSlot: e.target.value })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                <select value={editingBooking.timeSlot || ''} onChange={e => {
+                  const newSlot = e.target.value;
+                  // Check if the new slot is already booked on the current date
+                  const existingBookingsOnDate = getBookingsByDate(editingBooking.date);
+                  const slotConflict = existingBookingsOnDate.some((b) => {
+                    if (String(b.id) === String(editingBooking.id)) return false;
+                    const bookedSlot = timeSlots.find(s => s.label === b.timeSlot || s.time === b.slotTime);
+                    return bookedSlot && bookedSlot.label === newSlot;
+                  });
+                  if (slotConflict) {
+                    setSubmitError(`${newSlot} is already booked on ${editingBooking.date}.`);
+                  } else {
+                    setSubmitError(null);
+                  }
+                  setEditingBooking({ ...editingBooking, timeSlot: newSlot });
+                }} className="border rounded px-3 py-2 w-full text-black bg-white">
                   <option value="" disabled>Select Slot</option>
                   {timeSlots.map(slot => (
                     <option key={slot.id} value={slot.label}>{slot.label}</option>
