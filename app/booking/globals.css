@@ -50,20 +50,28 @@
 
 /* New color classes for calendar tiles */
 .booked-full-date {
-  background: #ef4444 !important; /* red for fully booked (two slots) */
+  background: #ef4444 !important; /* red for Reception only */
   color: #fff !important;
   font-weight: 600;
 }
 .booked-part-date {
-  background: #facc15 !important; /* yellow for partially booked (one slot) */
+  background: #facc15 !important; /* yellow for Lunch only */
   color: #78350f !important;
+  font-weight: 600;
+}
+/* Both slots booked - half yellow (left) + half red (right) */
+.booked-both-date {
+  background: linear-gradient(90deg, #facc15 50%, #ef4444 50%) !important;
+  color: #000 !important;
   font-weight: 600;
 }
 
 /* Preserve selection styling when a booked tile is selected */
 .booked-full-date.selected-date,
-.booked-part-date.selected-date {
+.booked-part-date.selected-date,
+.booked-both-date.selected-date {
   background-color: #204DC5 !important;
+  background: #204DC5 !important;
   color: #fff !important;
   box-shadow: 0 4px 6px -1px rgba(32,77,197,.35) !important;
 }

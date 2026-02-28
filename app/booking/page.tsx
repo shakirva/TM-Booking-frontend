@@ -289,12 +289,15 @@ export default function BookingPage() {
       const receptionBooked = bookedSlots.some(s => s.includes('reception') || s.includes('dinner'));
 
       // Color rules:
-      // - Red (booked-full-date) when Reception is booked (but not Lunch)
-      // - Yellow (booked-part-date) when Lunch is booked (with or without Reception)
-      if (receptionBooked && !lunchBooked) {
+      // - Half yellow + Half red (booked-both-date) when BOTH Lunch and Reception are booked
+      // - Red (booked-full-date) when Reception only is booked
+      // - Yellow (booked-part-date) when Lunch only is booked
+      if (lunchBooked && receptionBooked) {
+        classes.push('booked-both-date'); // Half yellow + Half red for both
+      } else if (receptionBooked) {
         classes.push('booked-full-date'); // Red for Reception only
       } else if (lunchBooked) {
-        classes.push('booked-part-date'); // Yellow for Lunch (or both)
+        classes.push('booked-part-date'); // Yellow for Lunch only
       } else if (bookings.length > 0) {
         // Fallback: if there are bookings but no match, show as booked
         classes.push('booked-full-date');
@@ -523,11 +526,16 @@ export default function BookingPage() {
     }
   };
 
-  // For a given date, get booked slot_ids
-  const getBookedSlotIdsForDate = (date: Date) => {
+  // For a given date, get booked slot times (e.g., "Lunch", "Reception")
+  const getBookedSlotTimesForDate = (date: Date): string[] => {
     const dateString = formatDateForComparison(date);
-    const bookings = getBookingsByDate(dateString) as Booking[];
-  return bookings.map((b) => (b as unknown as { slot_id: number }).slot_id);
+    const bookings = getBookingsByDate(dateString);
+    // Extract the time/slotTime from each booking
+    return bookings.map((b) => {
+      // Backend may store as 'time' or we may have 'slotTime' on the frontend model
+      const rawBooking = b as unknown as { time?: string; slotTime?: string };
+      return (rawBooking.time ?? rawBooking.slotTime ?? '').toLowerCase();
+    }).filter(Boolean);
   };
 
   // Don't render until client-side hydration is complete
@@ -627,8 +635,11 @@ export default function BookingPage() {
                       isEditMode={isEditMode}
                       editingBooking={editingBooking}
                       bookedTimes={(() => {
-                        const bookedSlotIds = getBookedSlotIdsForDate(date);
-                        return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
+                        const bookedSlotTimes = getBookedSlotTimesForDate(date);
+                        // Return slot.time values for slots that are already booked
+                        return timeSlots.filter((slot) => 
+                          bookedSlotTimes.some(bt => bt.includes(slot.label.toLowerCase()) || slot.label.toLowerCase().includes(bt))
+                        ).map((slot) => slot.time);
                       })()}
                     />
                   </section>
@@ -648,8 +659,11 @@ export default function BookingPage() {
                       isEditMode={isEditMode}
                       editingBooking={editingBooking}
                       bookedTimes={(() => {
-                        const bookedSlotIds = getBookedSlotIdsForDate(date);
-                        return timeSlots.filter((slot) => bookedSlotIds.includes(slot.id)).map((slot) => slot.time);
+                        const bookedSlotTimes = getBookedSlotTimesForDate(date);
+                        // Return slot.time values for slots that are already booked
+                        return timeSlots.filter((slot) => 
+                          bookedSlotTimes.some(bt => bt.includes(slot.label.toLowerCase()) || slot.label.toLowerCase().includes(bt))
+                        ).map((slot) => slot.time);
                       })()}
                       includeNight={includeNight}
                       setIncludeNight={setIncludeNight}
@@ -763,6 +777,25 @@ export default function BookingPage() {
               // Find slot_id from timeSlots
               const selectedSlot = timeSlots.find(slot => slot.label === editingBooking.timeSlot) || timeSlots[0];
               const slot_id = selectedSlot.id;
+              
+              // Validate: Check if the new date is already booked for the same slot
+              // (but allow if it's the same booking being edited)
+              const existingBookingsOnDate = getBookingsByDate(editingBooking.date);
+              const slotAlreadyBooked = existingBookingsOnDate.some((b) => {
+                // Skip the current booking being edited
+                if (String(b.id) === String(editingBooking.id)) return false;
+                // Check if the same slot is booked - use slotTime or timeSlot from Booking type
+                const rawB = b as unknown as { time?: string; slotTime?: string };
+                const bookedSlot = (rawB.time ?? b.slotTime ?? '').toLowerCase();
+                const selectedSlotName = selectedSlot.label.toLowerCase();
+                return bookedSlot.includes(selectedSlotName) || selectedSlotName.includes(bookedSlot);
+              });
+              
+              if (slotAlreadyBooked) {
+                setSubmitError(`${selectedSlot.label} is already booked on ${editingBooking.date}. Please select a different date or slot.`);
+                return;
+              }
+              
               // Prepare payload for backend
               const payload = {
                 id: editingBooking.id,
