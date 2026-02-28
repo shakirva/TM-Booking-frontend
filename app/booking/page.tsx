@@ -432,12 +432,16 @@ export default function BookingPage() {
         }
       }
 
+      // Calculate actual amounts
+      const actualTotalAmount = calculatedTotal || slotPrice;
+      const actualAdvanceAmount = paymentType === 'full' ? String(actualTotalAmount) : advanceAmount;
+
       // Save payment data to context
       setBooking(prev => ({
         ...prev,
         payment: {
           paymentType,
-          advanceAmount: paymentType === 'advance' ? advanceAmount : '',
+          advanceAmount: actualAdvanceAmount,
           paymentMode,
         },
       }));
@@ -446,6 +450,7 @@ export default function BookingPage() {
       try {
         // Always use local date string for backend
         const localDateString = date ? formatDateForComparison(date) : '';
+        const advanceAmountToSend = paymentType === 'full' ? actualTotalAmount : (parseFloat(advanceAmount) || 0);
         // For each selected slot, send a booking request with the correct slot_id
         for (const idx of selectedSlots) {
           const slot = timeSlots[idx];
@@ -457,7 +462,7 @@ export default function BookingPage() {
             occasion_type: occasion,
             // utility_type removed
             payment_mode: paymentMode,
-            advance_amount: paymentType === 'advance' ? advanceAmount : '',
+            advance_amount: advanceAmountToSend,
             date: localDateString,
             time: slot.time,
             customer_name: customerName,
@@ -468,7 +473,7 @@ export default function BookingPage() {
             address: address,
             payment_type: paymentType,
             night: includeNight ? 'Yes' : 'No',
-            total_amount: calculatedTotal || slotPrice,
+            total_amount: actualTotalAmount,
             remarks: remarks,
             utensil: utensil,
           });

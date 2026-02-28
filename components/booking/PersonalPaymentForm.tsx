@@ -393,9 +393,15 @@ const PersonalPaymentForm: React.FC<PersonalPaymentFormProps> = ({
                 <span>-₹{(parseFloat(advanceAmount) || 0).toLocaleString()}</span>
               </div>
             )}
+            {paymentType === 'full' && (
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Full Payment:</span>
+                <span>-₹{totalAmount.toLocaleString()}</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-base mt-2 pt-2 border-t border-gray-200">
               <span className='text-black'>Balance Amount</span>
-              <span className='text-orange-600'>₹{(totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
+              <span className='text-orange-600'>₹{paymentType === 'full' ? '0' : (totalAmount - (parseFloat(advanceAmount) || 0)).toLocaleString()}</span>
             </div>
           </div>
 
