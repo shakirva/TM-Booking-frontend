@@ -79,7 +79,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
               const isBooked = (bookedTimes || []).includes(slot.time);
               return (
                 <option key={slot.label} value={idx} disabled={isBooked}>
-                  {slot.label} - ₹{slot.price.toLocaleString()} {isBooked ? '(Booked)' : ''}
+                  {slot.label} {isBooked ? '(Booked)' : ''}
                 </option>
               );
             })}

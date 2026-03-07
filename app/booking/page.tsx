@@ -211,7 +211,7 @@ export default function BookingPage() {
   const today = new Date();
   // Calculate total slot price dynamically based on selected slots
   const slotPrice = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
-  const minAdvance = 5000;
+  const minAdvance = 1;
 
   // Check if we're in edit mode by looking for existing booking data
   const isPersonalEditMode = !!(booking?.personal?.customerName && booking?.personal?.phone1);
@@ -687,21 +687,21 @@ export default function BookingPage() {
                   date: details.date || '',
                   customerName: details.name || details.customerName || '',
                   customerPhone: details.phone || details.customerPhone || '',
-                  customerPhone2: '',
-                  groomName: '',
-                  brideName: '',
-                  address: '',
+                  customerPhone2: details.customer_phone2 || details.phone2 || '',
+                  groomName: details.groom_name || '',
+                  brideName: details.bride_name || '',
+                  address: details.address || '',
                   occasion: details.occasion_type || details.occasion || '',
                   timeSlot: details.time || '',
                   slotTime: details.time || '',
-                  paymentType: details.payment_mode === 'advance' ? 'advance' : 'full',
+                  paymentType: details.payment_type === 'full' ? 'full' : 'advance',
                   advanceAmount: details.advance_amount || details.advanceAmount || '',
                   paymentMode: (() => {
                     const mode = ((details.payment_mode || details.paymentMode) as string || '').toLowerCase();
                     return (['bank', 'cash', 'upi'].includes(mode) ? mode : 'cash') as 'bank' | 'cash' | 'upi';
                   })(),
-                  price: 0,
-                  notes: details.details || details.notes || '',
+                  price: parseFloat(String(details.total_amount || details.price || 0)) || 0,
+                  notes: details.remarks || details.details || details.notes || '',
                   createdAt: '',
                   updatedAt: '',
                 });
@@ -802,7 +802,7 @@ export default function BookingPage() {
                 name: editingBooking.customerName,
                 phone: editingBooking.customerPhone,
                 slot_id,
-                details: editingBooking.notes,
+                remarks: editingBooking.notes,
                 occasion_type: editingBooking.occasion,
                 payment_mode: (editingBooking.paymentMode || '').toLowerCase(),
                 advance_amount: editingBooking.advanceAmount,
@@ -860,7 +860,15 @@ export default function BookingPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-black mb-2">Payment Type</label>
-                  <select value={editingBooking.paymentType} onChange={e => setEditingBooking({ ...editingBooking, paymentType: e.target.value as 'advance' | 'full' })} className="border rounded px-3 py-2 w-full text-black bg-white">
+                  <select value={editingBooking.paymentType} onChange={e => {
+                    const newType = e.target.value as 'advance' | 'full';
+                    if (newType === 'full') {
+                      // When full payment is selected, set advance amount to total (price)
+                      setEditingBooking({ ...editingBooking, paymentType: newType, advanceAmount: String(editingBooking.price || 0) });
+                    } else {
+                      setEditingBooking({ ...editingBooking, paymentType: newType });
+                    }
+                  }} className="border rounded px-3 py-2 w-full text-black bg-white">
                     <option value="advance">Advance</option>
                     <option value="full">Full</option>
                   </select>

@@ -226,8 +226,6 @@ export default function ReportsPage() {
                 <th class="text-center">Night</th>
                 <th class="text-right">Advance</th>
                 <th class="text-right">Balance</th>
-                <th>Utensil</th>
-                <th class="text-right">Final Pay</th>
                 <th>Remarks</th>
               </tr>
             </thead>
@@ -241,11 +239,9 @@ export default function ReportsPage() {
                   <td class="text-center">${b.night || 'No'}</td>
                   <td class="text-right">₹${(parseFloat(String(b.advance_amount)) || 0).toLocaleString()}</td>
                   <td class="text-right">₹${(b.balance_amount || 0).toLocaleString()}</td>
-                  <td>${b.utensil || '-'}</td>
-                  <td class="text-right">${b.final_payment ? `₹${parseFloat(String(b.final_payment)).toLocaleString()}` : '-'}</td>
                   <td>${b.remarks || '-'}</td>
                 </tr>
-              `).join('') || '<tr><td colspan="10" class="text-center">No bookings found</td></tr>'}
+              `).join('') || '<tr><td colspan="8" class="text-center">No bookings found</td></tr>'}
             </tbody>
           </table>
           
@@ -276,8 +272,6 @@ export default function ReportsPage() {
       "Night",
       "Advance Amount",
       "Balance Amount",
-      "Utensil",
-      "Final Payment",
       "Remarks"
     ];
     
@@ -289,8 +283,6 @@ export default function ReportsPage() {
       b.night || "No",
       parseFloat(String(b.advance_amount)) || 0,
       b.balance_amount || 0,
-      b.utensil || "",
-      parseFloat(String(b.final_payment)) || 0,
       b.remarks || ""
     ]);
     
@@ -579,8 +571,6 @@ export default function ReportsPage() {
                 <th className="py-3 px-4 text-center font-semibold text-gray-700">Night</th>
                 <th className="py-3 px-4 text-right font-semibold text-gray-700">Advance</th>
                 <th className="py-3 px-4 text-right font-semibold text-gray-700">Balance</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Utensil</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Final Pay</th>
                 <th className="py-3 px-4 text-left font-semibold text-gray-700">Remarks</th>
                 <th className="py-3 px-4 text-center font-semibold text-gray-700">Actions</th>
               </tr>
@@ -588,7 +578,7 @@ export default function ReportsPage() {
             <tbody className="divide-y divide-gray-100">
               {data?.bookings.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="py-8 text-center text-gray-400">
+                  <td colSpan={9} className="py-8 text-center text-gray-400">
                     No bookings found. Adjust your filters or create new bookings.
                   </td>
                 </tr>
@@ -617,10 +607,6 @@ export default function ReportsPage() {
                   </td>
                   <td className="py-3 px-4 text-right text-amber-600 font-medium">
                     ₹{(booking.balance_amount || 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-gray-700">{booking.utensil || '-'}</td>
-                  <td className="py-3 px-4 text-right text-green-600 font-medium">
-                    {booking.final_payment ? `₹${parseFloat(String(booking.final_payment)).toLocaleString()}` : '-'}
                   </td>
                   <td className="py-3 px-4 text-gray-500 max-w-[150px] truncate" title={booking.remarks || ''}>
                     {booking.remarks || '-'}

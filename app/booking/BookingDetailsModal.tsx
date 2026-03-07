@@ -16,8 +16,10 @@ export interface BookingDetails {
   occasion?: string;
   details?: string;
   notes?: string;
+  remarks?: string;
   payment_mode?: string;
   paymentMode?: string;
+  payment_type?: 'advance' | 'full';
   paymentType?: 'advance' | 'full';
   advance_amount?: string;
   advanceAmount?: string;
@@ -82,7 +84,7 @@ const BookingDetailsModal: React.FC<BookingDetailsModalProps> = ({ bookings, onC
             const phone = details.phone || details.customerPhone || '-';
             const occasion = details.occasion_type || details.occasion || '-';
             const payment = details.payment_mode || details.paymentMode || '-';
-            const notes = details.details || details.notes || '-';
+            const notes = details.remarks || details.details || details.notes || '-';
             const advance = details.advance_amount || details.advanceAmount || '';
             const paymentType = details.paymentType || (advance ? 'advance' : 'full');
             const totalRaw = details.total_amount || (details.price ? String(details.price) : '');
