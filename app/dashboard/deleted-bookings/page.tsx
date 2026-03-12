@@ -35,13 +35,13 @@ export default function DeletedBookingsPage() {
   const [deleted, setDeleted] = useState<DeletedBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   // Filters
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   const printRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,17 +97,17 @@ export default function DeletedBookingsPage() {
       const matches = searchFields.some(f => (f || '').toLowerCase().includes(q));
       if (!matches) return false;
     }
-    
+
     // From date filter
     if (fromDate && b.date) {
       if (new Date(b.date) < new Date(fromDate)) return false;
     }
-    
+
     // To date filter
     if (toDate && b.date) {
       if (new Date(b.date) > new Date(toDate)) return false;
     }
-    
+
     return true;
   });
 
@@ -121,7 +121,7 @@ export default function DeletedBookingsPage() {
   const handlePrint = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    
+
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
@@ -231,7 +231,7 @@ export default function DeletedBookingsPage() {
         </body>
       </html>
     `);
-    
+
     printWindow.document.close();
     printWindow.focus();
     setTimeout(() => {
@@ -242,7 +242,7 @@ export default function DeletedBookingsPage() {
 
   const handleExportCSV = () => {
     if (!filteredBookings.length) return;
-    
+
     const headers = [
       "Event Date",
       "Customer Name",
@@ -256,7 +256,7 @@ export default function DeletedBookingsPage() {
       "Remarks",
       "Deleted At"
     ];
-    
+
     const rows = filteredBookings.map(b => [
       b.date ? formatDateDMY(b.date) : "",
       b.customer_name || b.name || "",
@@ -270,12 +270,12 @@ export default function DeletedBookingsPage() {
       b.remarks || "",
       b.deleted_at ? formatDateDMY(b.deleted_at) : ""
     ]);
-    
+
     const csvContent = [
       headers.join(","),
       ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
     ].join("\n");
-    
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -294,216 +294,222 @@ export default function DeletedBookingsPage() {
   return (
     <div className="space-y-6 pb-24">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Event Log</h1>
-          <p className="text-gray-500 text-sm mt-1">View all booking history ordered by event date</p>
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="min-w-0">
+          <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Deleted Bookings</h1>
+          <p className="text-gray-500 text-sm mt-1">Review complete history of cancelled or deleted event bookings</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-200 border-2 whitespace-nowrap ${showFilters
+              ? 'bg-blue-50 border-blue-200 text-blue-600'
+              : 'bg-white border-gray-100 text-gray-600 hover:border-gray-200 shadow-sm'
+              }`}
           >
-            <FiFilter className="w-4 h-4" />
-            Filters
+            <FiFilter className="w-5 h-5 flex-shrink-0" />
+            {showFilters ? 'Hide Filters' : 'Show Filters'}
           </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
-          >
-            <FiPrinter className="w-4 h-4" />
-            Print
-          </button>
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
-          >
-            <FiDownload className="w-4 h-4" />
-            Export CSV
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrint}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold transition-all duration-200 shadow-lg shadow-blue-200 flex-1 sm:flex-none whitespace-nowrap"
+            >
+              <FiPrinter className="w-5 h-5 flex-shrink-0" />
+              Print
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 font-bold transition-all duration-200 shadow-lg shadow-emerald-200 flex-1 sm:flex-none whitespace-nowrap"
+            >
+              <FiDownload className="w-5 h-5 flex-shrink-0" />
+              Export
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Filters Panel */}
       {showFilters && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
-          <h3 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <FiCalendar className="text-blue-600" />
-            Filters
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
-              <input
-                type="text"
-                placeholder="Name, phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
-              />
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-xl shadow-gray-100/50 animate-in slide-in-from-top-4 duration-300">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">Search Booking</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Name, phone, or ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm placeholder:text-gray-400 font-medium"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">From Date (Event)</label>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">From Date</label>
               <input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                className="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm font-medium"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">To Date (Event)</label>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider ml-1">To Date</label>
               <input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 outline-none"
+                className="w-full bg-gray-50 border-0 rounded-xl px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 transition-all outline-none text-sm font-medium"
               />
             </div>
           </div>
-          <div className="flex gap-2 mt-4">
+          <div className="flex justify-end mt-6">
             <button
               onClick={handleClearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+              className="text-sm font-bold text-gray-500 hover:text-red-500 transition-colors uppercase tracking-widest"
             >
-              Clear Filters
+              Reset All Filters
             </button>
           </div>
         </div>
       )}
 
       {/* Error message */}
-      {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg">{error}</div>}
+      {error && <div className="text-red-500 text-sm bg-red-50 p-3 rounded-lg font-medium border border-red-100">{error}</div>}
 
-      {/* Mobile card list */}
-      <div className="space-y-3 md:hidden">
-        {filteredBookings.map(b => (
-          <div
-            key={b.id}
-            className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm"
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-red-500 font-medium">Deleted</span>
-              <span className={`text-xs px-2 py-1 rounded-full ${
-                b.night === 'Yes' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
-              }`}>
-                Night: {b.night || 'No'}
-              </span>
-            </div>
-            
-            {/* Main info */}
-            <div className="mb-3">
-              <div className="font-semibold text-gray-900">{b.customer_name || b.name || '-'}</div>
-              <div className="text-sm text-gray-600">{b.phone || b.customer_phone || '-'}</div>
-            </div>
-            
-            {/* Details grid */}
-            <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-              <div>
-                <span className="text-gray-500">Event Date</span>
-                <div className="font-medium text-gray-900">{b.date ? formatDateDMY(b.date) : '-'}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Total</span>
-                <div className="font-medium text-gray-900">₹{(parseFloat(String(b.total_amount)) || 0).toLocaleString()}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Advance</span>
-                <div className="font-medium text-gray-900">₹{(parseFloat(String(b.advance_amount)) || 0).toLocaleString()}</div>
-              </div>
-              <div>
-                <span className="text-gray-500">Balance</span>
-                <div className="font-medium text-amber-600">₹{(b.balance_amount || 0).toLocaleString()}</div>
-              </div>
-              <div className="col-span-2">
-                <span className="text-gray-500">Deleted At</span>
-                <div className="font-medium text-red-600">{b.deleted_at ? formatDateDMY(b.deleted_at) : '-'}</div>
-              </div>
-            </div>
-            
-            {b.remarks && (
-              <div className="text-sm text-gray-500 truncate">
-                <span className="font-medium">Remarks:</span> {b.remarks}
+      {/* Data Table / Mobile Cards */}
+      <div ref={printRef} className="space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="p-6 border-b border-gray-100 bg-gray-50/30">
+            <h3 className="font-bold text-gray-800">Deleted Logs</h3>
+            <p className="text-sm text-gray-500">History of deleted transactions ordered by Event Date</p>
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block max-h-[600px] overflow-x-auto overflow-y-auto custom-scrollbar w-full">
+            <table className="w-full text-sm border-separate border-spacing-0 min-w-[800px]">
+              <thead className="bg-gray-50 sticky top-0 z-20 shadow-sm">
+                <tr>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Event Date</th>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Customer</th>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Phone</th>
+                  <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Total Amt</th>
+                  <th className="py-4 px-6 text-center font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Night</th>
+                  <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Advance</th>
+                  <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Balance</th>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Deleted At</th>
+                  <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] border-b border-gray-100 bg-gray-50">Remarks</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {filteredBookings.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="py-12 text-center text-gray-400">
+                      <div className="flex flex-col items-center gap-2">
+                        <FiCalendar className="w-10 h-10 opacity-20" />
+                        <p>No deleted bookings found.</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                {filteredBookings.map((booking) => (
+                  <tr key={booking.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="py-4 px-6 text-gray-900 font-semibold whitespace-nowrap">
+                      {booking.date ? formatDateDMY(booking.date) : '-'}
+                    </td>
+                    <td className="py-4 px-6 text-gray-700 whitespace-nowrap">{booking.customer_name || booking.name || '-'}</td>
+                    <td className="py-4 px-6 text-gray-700 font-medium whitespace-nowrap">{booking.phone || booking.customer_phone || '-'}</td>
+                    <td className="py-4 px-6 text-right text-gray-900 font-bold whitespace-nowrap">
+                      ₹{(parseFloat(String(booking.total_amount)) || 0).toLocaleString()}
+                    </td>
+                    <td className="py-4 px-6 text-center whitespace-nowrap">
+                      <span className={`inline-flex px-3 py-1 rounded-lg text-xs font-bold ${booking.night === 'Yes'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-gray-100 text-gray-600'
+                        }`}>
+                        {booking.night || 'No'}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 text-emerald-600 font-semibold whitespace-nowrap">
+                      ₹{(parseFloat(String(booking.advance_amount)) || 0).toLocaleString()}
+                    </td>
+                    <td className="py-4 px-6 text-rose-600 font-bold whitespace-nowrap">
+                      ₹{(booking.balance_amount || 0).toLocaleString()}
+                    </td>
+                    <td className="py-4 px-6 text-red-600 font-bold whitespace-nowrap">
+                      {booking.deleted_at ? formatDateDMY(booking.deleted_at) : '-'}
+                    </td>
+                    <td className="py-4 px-6 text-gray-500 max-w-[200px] truncate italic" title={booking.remarks || ''}>
+                      {booking.remarks || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden divide-y divide-gray-100">
+            {filteredBookings.length === 0 && (
+              <div className="py-12 text-center text-gray-400">
+                <FiCalendar className="w-10 h-10 mx-auto opacity-20 mb-3" />
+                <p>No records found.</p>
               </div>
             )}
-          </div>
-        ))}
-        {filteredBookings.length === 0 && (
-          <div className="text-center py-8 text-gray-400">No deleted bookings found</div>
-        )}
-      </div>
+            {filteredBookings.map((booking) => (
+              <div key={booking.id} className="p-4 bg-white hover:bg-gray-50/50 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-sm font-bold text-gray-900 mb-0.5">
+                      {booking.customer_name || booking.name || 'Unknown Guest'}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
+                      <FiCalendar className="w-3 h-3" />
+                      {booking.date ? formatDateDMY(booking.date) : '-'}
+                    </p>
+                  </div>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-100 text-red-700">
+                    Deleted
+                  </span>
+                </div>
 
-      {/* Desktop Data Table */}
-      <div ref={printRef} className="bg-white rounded-xl border border-gray-200 overflow-hidden hidden md:block">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-800">Booking Details</h3>
-          <p className="text-sm text-gray-500">Ordered by Event Date • {filteredBookings.length} records</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Event Date</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Customer Name</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Phone</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Total Amt</th>
-                <th className="py-3 px-4 text-center font-semibold text-gray-700">Night</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Advance</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Balance</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Utensil</th>
-                <th className="py-3 px-4 text-right font-semibold text-gray-700">Final Pay</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Remarks</th>
-                <th className="py-3 px-4 text-left font-semibold text-gray-700">Deleted At</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {filteredBookings.length === 0 && (
-                <tr>
-                  <td colSpan={11} className="py-8 text-center text-gray-400">
-                    No deleted bookings found.
-                  </td>
-                </tr>
-              )}
-              {filteredBookings.map((booking) => (
-                <tr key={booking.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="py-3 px-4 text-gray-900 font-medium">
-                    {booking.date ? formatDateDMY(booking.date) : '-'}
-                  </td>
-                  <td className="py-3 px-4 text-gray-700">{booking.customer_name || booking.name || '-'}</td>
-                  <td className="py-3 px-4 text-gray-700">{booking.phone || booking.customer_phone || '-'}</td>
-                  <td className="py-3 px-4 text-right text-gray-900 font-medium">
-                    ₹{(parseFloat(String(booking.total_amount)) || 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-center">
-                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                      booking.night === 'Yes' 
-                        ? 'bg-blue-100 text-blue-700' 
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
-                      {booking.night || 'No'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-right text-gray-700">
-                    ₹{(parseFloat(String(booking.advance_amount)) || 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-right text-amber-600 font-medium">
-                    ₹{(booking.balance_amount || 0).toLocaleString()}
-                  </td>
-                  <td className="py-3 px-4 text-gray-700">{booking.utensil || '-'}</td>
-                  <td className="py-3 px-4 text-right text-green-600 font-medium">
-                    {booking.final_payment ? `₹${parseFloat(String(booking.final_payment)).toLocaleString()}` : '-'}
-                  </td>
-                  <td className="py-3 px-4 text-gray-500 max-w-[150px] truncate" title={booking.remarks || ''}>
-                    {booking.remarks || '-'}
-                  </td>
-                  <td className="py-3 px-4 text-red-600 font-medium">
-                    {booking.deleted_at ? formatDateDMY(booking.deleted_at) : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                <div className="grid grid-cols-3 gap-2 mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase text-gray-400 font-bold mb-1">Total</p>
+                    <p className="text-sm font-bold text-gray-900">₹{(parseFloat(String(booking.total_amount)) || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="text-center border-x border-gray-200">
+                    <p className="text-[10px] uppercase text-gray-400 font-bold mb-1">Paid</p>
+                    <p className="text-sm font-bold text-emerald-600">₹{(parseFloat(String(booking.advance_amount)) || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase text-gray-400 font-bold mb-1">Due</p>
+                    <p className="text-sm font-bold text-rose-600">₹{(booking.balance_amount || 0).toLocaleString()}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 bg-red-50/50 p-3 rounded-xl border border-red-100/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-red-400 uppercase tracking-widest leading-none">Deletion Date</span>
+                    <span className="text-xs font-bold text-red-600">{booking.deleted_at ? formatDateDMY(booking.deleted_at) : '-'}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none">Phone</span>
+                    <span className="text-xs font-bold text-gray-700">{booking.phone || booking.customer_phone || '-'}</span>
+                  </div>
+                </div>
+
+                {booking.remarks && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-dotted border-gray-200">
+                    <p className="text-xs text-gray-500 italic">
+                      &quot;{booking.remarks}&quot;
+                    </p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
