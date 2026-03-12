@@ -380,8 +380,8 @@ export default function DeletedBookingsPage() {
 
       {/* Data Table / Mobile Cards */}
       <div ref={printRef} className="space-y-4">
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
-          <div className="p-6 border-b border-gray-100 bg-gray-50/30">
+        <div className="md:bg-white bg-transparent rounded-2xl overflow-hidden">
+          <div className="md:p-6 p-2 border-b border-gray-100 bg-gray-50/30">
             <h3 className="font-bold text-gray-800">Deleted Logs</h3>
             <p className="text-sm text-gray-500">History of deleted transactions ordered by Event Date</p>
           </div>
@@ -450,7 +450,7 @@ export default function DeletedBookingsPage() {
           </div>
 
           {/* Mobile Card View */}
-          <div className="lg:hidden divide-y divide-gray-100">
+          <div className="lg:hidden flex flex-col gap-2">
             {filteredBookings.length === 0 && (
               <div className="py-12 text-center text-gray-400">
                 <FiCalendar className="w-10 h-10 mx-auto opacity-20 mb-3" />
@@ -458,7 +458,7 @@ export default function DeletedBookingsPage() {
               </div>
             )}
             {filteredBookings.map((booking) => (
-              <div key={booking.id} className="p-4 bg-white hover:bg-gray-50/50 transition-colors">
+              <div key={booking.id} className="p-4 bg-white hover:bg-gray-50/50 transition-colors rounded-md">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="text-sm font-bold text-gray-900 mb-0.5">
