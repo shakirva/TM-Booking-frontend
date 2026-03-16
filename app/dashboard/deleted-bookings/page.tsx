@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState, useRef } from 'react';
-import { getDeletedBookings } from '@/lib/api';
+import { getDeletedBookings, permanentlyDeleteBooking } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { formatDateDMY } from '@/lib/date';
-import { FiPrinter, FiDownload, FiFilter, FiCalendar } from "react-icons/fi";
+import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrash2 } from "react-icons/fi";
 
 type DeletedBooking = {
   id: number;
@@ -35,6 +35,7 @@ export default function DeletedBookingsPage() {
   const [deleted, setDeleted] = useState<DeletedBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   // Filters
   const [fromDate, setFromDate] = useState('');
@@ -43,6 +44,26 @@ export default function DeletedBookingsPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
+
+  // Handle permanent delete
+  const handlePermanentDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to permanently delete this record? This action cannot be undone.')) {
+      return;
+    }
+    const token = getToken();
+    if (!token) return;
+    
+    setDeleting(id);
+    try {
+      await permanentlyDeleteBooking(id, token);
+      setDeleted(prev => prev.filter(b => b.id !== id));
+    } catch (err) {
+      console.error('Failed to delete:', err);
+      alert('Failed to delete the record.');
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   useEffect(() => {
     const fetchDeleted = async () => {
@@ -400,6 +421,7 @@ export default function DeletedBookingsPage() {
                   <th className="py-4 px-6 text-right font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Balance</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] whitespace-nowrap border-b border-gray-100 bg-gray-50">Deleted At</th>
                   <th className="py-4 px-6 text-left font-bold text-gray-600 uppercase tracking-wider text-[10px] border-b border-gray-100 bg-gray-50">Remarks</th>
+                  <th className="py-4 px-6 text-center font-bold text-gray-600 uppercase tracking-wider text-[10px] border-b border-gray-100 bg-gray-50">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -442,6 +464,20 @@ export default function DeletedBookingsPage() {
                     </td>
                     <td className="py-4 px-6 text-gray-500 max-w-[200px] truncate italic" title={booking.remarks || ''}>
                       {booking.remarks || '-'}
+                    </td>
+                    <td className="py-4 px-6 text-center">
+                      <button
+                        onClick={() => handlePermanentDelete(booking.id)}
+                        disabled={deleting === booking.id}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Permanently Delete"
+                      >
+                        {deleting === booking.id ? (
+                          <span className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin inline-block"></span>
+                        ) : (
+                          <FiTrash2 className="w-4 h-4" />
+                        )}
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -507,6 +543,22 @@ export default function DeletedBookingsPage() {
                     </p>
                   </div>
                 )}
+
+                {/* Delete Button */}
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={() => handlePermanentDelete(booking.id)}
+                    disabled={deleting === booking.id}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {deleting === booking.id ? (
+                      <span className="w-3 h-3 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></span>
+                    ) : (
+                      <FiTrash2 className="w-3 h-3" />
+                    )}
+                    Delete Permanently
+                  </button>
+                </div>
               </div>
             ))}
           </div>

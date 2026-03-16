@@ -172,3 +172,11 @@ export const deleteBooking = async (id: string, token: string) => {
   });
   return res.data;
 };
+
+export const permanentlyDeleteBooking = async (id: number, token: string) => {
+  if (!API_URL) throw new Error('API base URL not configured');
+  const res = await axios.delete(`${API_URL}/bookings/deleted/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
