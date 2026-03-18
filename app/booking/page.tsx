@@ -363,18 +363,20 @@ export default function BookingPage() {
         return;
       }
       // Always use local date string for both display and backend
-      const localDateString = formatDateForComparison(date);
+      const localDateString = date ? formatDateForComparison(date) : '';
       setBooking(prev => ({
         ...prev,
         slot: {
+          ...prev.slot,
           selectedSlots,
           selectedSlotLabels: selectedSlots.map(idx => timeSlots[idx]?.label || ''),
           selectedSlotTimes: selectedSlots.map(idx => timeSlots[idx]?.time || ''),
           selectedSlotPrices: selectedSlots.map(idx => timeSlots[idx]?.price || 0),
           date: localDateString,
           occasion,
-          // utility removed
           notes,
+          includeNight,
+          nightPrice,
         },
       }));
       setDate(new Date(date.getFullYear(), date.getMonth(), date.getDate())); // ensure no time offset
@@ -417,10 +419,15 @@ export default function BookingPage() {
       }));
 
       // Since personal and payment are now combined, proceed to confirmation
+      // Calculate actual amounts - ensure night charges are included if selected
+      const baseTotal = selectedSlots.reduce((sum, idx) => sum + (timeSlots[idx]?.price || 0), 0);
+      const fallbackTotal = baseTotal + (includeNight ? nightPrice : 0);
+      const actualTotalAmount = calculatedTotal || fallbackTotal;
+      const actualAdvanceAmount = paymentType === 'full' ? String(actualTotalAmount) : advanceAmount;
+
       // Validate payment details
       if (paymentType === 'advance') {
         const advance = parseInt(advanceAmount, 10);
-        const totalForValidation = calculatedTotal || slotPrice || 40000; // Fallback to default if not calculated
         if (Number.isNaN(advance)) {
           alert('Please enter advance amount');
           return;
@@ -429,15 +436,11 @@ export default function BookingPage() {
           alert(`Advance amount must be at least ₹${minAdvance.toLocaleString()}`);
           return;
         }
-        if (advance > totalForValidation) {
+        if (advance > actualTotalAmount) {
           alert('Advance amount cannot exceed total amount');
           return;
         }
       }
-
-      // Calculate actual amounts
-      const actualTotalAmount = calculatedTotal || slotPrice;
-      const actualAdvanceAmount = paymentType === 'full' ? String(actualTotalAmount) : advanceAmount;
 
       // Save payment data to context
       setBooking(prev => ({

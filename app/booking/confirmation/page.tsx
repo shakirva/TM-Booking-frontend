@@ -2,7 +2,7 @@
 import React, { useRef } from "react";
 import { useRouter } from 'next/navigation';
 import { removeToken } from '@/lib/auth';
-import { useBooking } from "../../context/BookingContext";
+import { useBooking, BookingData } from "../../context/BookingContext";
 import { formatDateDMY } from '@/lib/date';
 import { FaHome, FaShareAlt } from 'react-icons/fa';
 import html2canvas from "html2canvas";
@@ -25,7 +25,7 @@ type Personal = {
 export default function BookingConfirmationPage() {
   const { booking } = useBooking();
   const personal = (booking.personal || {}) as Personal;
-  const slot = booking.slot || {};
+  const slot = (booking.slot || {}) as BookingData['slot'];
   const payment = booking.payment || {};
   const detailsRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -34,7 +34,11 @@ export default function BookingConfirmationPage() {
   const slotLabels = getSlotArray(slot, 'selectedSlotLabels', 'selectedSlotLabel');
   const slotPrices = getSlotArray<number>(slot, 'selectedSlotPrices', 'selectedSlotPrice');
   const timeSlotLabel = slotLabels.length ? slotLabels.join(', ') : '-';
-  const totalAmount = slotPrices.length ? slotPrices.reduce((sum: number, p: number) => sum + (Number(p) || 0), 0) : '-';
+  
+  // Base sum of slot prices
+  const baseTotal = slotPrices.length ? slotPrices.reduce((sum: number, p: number) => sum + (Number(p) || 0), 0) : 0;
+  // Final total including night charges if selected
+  const totalAmount = baseTotal + (slot.includeNight ? (slot.nightPrice || 0) : 0);
 
 
 

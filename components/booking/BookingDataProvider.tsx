@@ -175,7 +175,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
       return () => clearInterval(interval);
     }
     return () => { cancelled = true; };
-  }, []);
+  }, [fetchBookings]);
 
   // Refresh when window/tab gains focus (keeps dashboard and calendar fresh)
   useEffect(() => {
@@ -185,7 +185,7 @@ export function BookingDataProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, []);
+  }, [fetchBookings]);
 
   // Populate form from existing booking
   const populateFormFromBooking = (booking: Booking) => {

@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from "react";
 
-type BookingData = {
+export type BookingData = {
   personal: {
     customerName?: string;
     address?: string;
@@ -19,6 +19,13 @@ type BookingData = {
     date?: string;
     occasion?: string;
     notes?: string;
+    // Multi-slot support
+    selectedSlotLabels?: string[];
+    selectedSlotTimes?: string[];
+    selectedSlotPrices?: number[];
+    // Night option
+    includeNight?: boolean;
+    nightPrice?: number;
   };
   payment: {
     paymentType?: string;
