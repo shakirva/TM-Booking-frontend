@@ -5,6 +5,13 @@ import { getToken } from '@/lib/auth';
 import { formatDateDMY } from '@/lib/date';
 import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiTrash2 } from "react-icons/fi";
 
+// Accepts primary + optional fallback fields (deleted bookings may use 'details' or 'notes' instead of 'remarks')
+const cleanRemarks = (remarks?: string, details?: string, notes?: string): string => {
+  const raw = remarks || details || notes || '';
+  if (!raw) return '';
+  return raw.replace(/^Booked on[^\n]*\n?/i, '').trim();
+};
+
 type DeletedBooking = {
   id: number;
   original_booking_id: number;
@@ -28,6 +35,7 @@ type DeletedBooking = {
   utensil?: string;
   final_payment?: string;
   remarks?: string;
+  notes?: string;
   balance_amount?: number;
 };
 
@@ -113,7 +121,9 @@ export default function DeletedBookingsPage() {
         b.bride_name,
         b.phone,
         b.customer_phone,
-        b.remarks
+        b.remarks,
+        b.details,
+        b.notes
       ];
       const matches = searchFields.some(f => (f || '').toLowerCase().includes(q));
       if (!matches) return false;
@@ -238,7 +248,7 @@ export default function DeletedBookingsPage() {
                   <td class="text-right">₹${(b.balance_amount || 0).toLocaleString()}</td>
                   <td>${b.utensil || '-'}</td>
                   <td class="text-right">${b.final_payment ? `₹${parseFloat(String(b.final_payment)).toLocaleString()}` : '-'}</td>
-                  <td>${b.remarks || '-'}</td>
+                  <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                   <td>${b.deleted_at ? formatDateDMY(b.deleted_at) : '-'}</td>
                 </tr>
               `).join('') || '<tr><td colspan="11" class="text-center">No deleted bookings found</td></tr>'}
@@ -288,7 +298,7 @@ export default function DeletedBookingsPage() {
       b.balance_amount || 0,
       b.utensil || "",
       parseFloat(String(b.final_payment)) || 0,
-      b.remarks || "",
+      cleanRemarks(b.remarks, b.details, b.notes) || "",
       b.deleted_at ? formatDateDMY(b.deleted_at) : ""
     ]);
 
@@ -462,8 +472,8 @@ export default function DeletedBookingsPage() {
                     <td className="py-4 px-6 text-red-600 font-bold whitespace-nowrap">
                       {booking.deleted_at ? formatDateDMY(booking.deleted_at) : '-'}
                     </td>
-                    <td className="py-4 px-6 text-gray-500 max-w-[200px] truncate italic" title={booking.remarks || ''}>
-                      {booking.remarks || '-'}
+                    <td className="py-4 px-6 text-gray-500 max-w-[200px] truncate italic" title={cleanRemarks(booking.remarks, booking.details, booking.notes)}>
+                      {cleanRemarks(booking.remarks, booking.details, booking.notes) || '-'}
                     </td>
                     <td className="py-4 px-6 text-center">
                       <button
@@ -536,10 +546,10 @@ export default function DeletedBookingsPage() {
                   </div>
                 </div>
 
-                {booking.remarks && (
+                {cleanRemarks(booking.remarks, booking.details, booking.notes) && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-xl border border-dotted border-gray-200">
                     <p className="text-xs text-gray-500 italic">
-                      &quot;{booking.remarks}&quot;
+                      &quot;{cleanRemarks(booking.remarks, booking.details, booking.notes)}&quot;
                     </p>
                   </div>
                 )}

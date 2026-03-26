@@ -7,12 +7,22 @@ import { getDashboardSummary, getUpcomingEvents } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { formatDateDMY } from '@/lib/date';
 
+// Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
+// Accepts primary + optional fallback fields (deleted bookings/bookings may use 'details' or 'notes' instead of 'remarks')
+const cleanRemarks = (remarks?: string, details?: string, notes?: string): string => {
+  const raw = remarks || details || notes || '';
+  if (!raw) return '';
+  return raw.replace(/^Booked on[^\n]*\n?/i, '').trim();
+};
+
 interface UpcomingEvent {
   id: string | number;
   event_date: string;
   customer_name: string;
   primary_phone: string;
-  remarks: string;
+  remarks?: string;
+  details?: string;
+  notes?: string;
 }
 
 export default function DashboardPage() {
@@ -154,7 +164,7 @@ export default function DashboardPage() {
                         {event.remarks ? (
                           <>
                             <FiMessageSquare className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                            <span className="truncate" title={event.remarks}>{event.remarks}</span>
+                            <span className="truncate" title={cleanRemarks(event.remarks, event.details, event.notes)}>{cleanRemarks(event.remarks, event.details, event.notes)}</span>
                           </>
                         ) : (
                           <span className="text-gray-400">-</span>
@@ -192,10 +202,10 @@ export default function DashboardPage() {
                       <FaPhoneAlt className="h-3 w-3 text-gray-400" />
                       {event.primary_phone || '-'}
                     </div>
-                    {event.remarks && (
+                    {cleanRemarks(event.remarks, event.details, event.notes) && (
                       <div className="text-sm text-gray-500 mt-2 flex items-start gap-1">
                         <FiMessageSquare className="h-3 w-3 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="line-clamp-2">{event.remarks}</span>
+                        <span className="line-clamp-2">{cleanRemarks(event.remarks, event.details, event.notes)}</span>
                       </div>
                     )}
                   </div>

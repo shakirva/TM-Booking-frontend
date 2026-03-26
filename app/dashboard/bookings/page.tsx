@@ -7,10 +7,19 @@ import { getRequests, deleteBooking, updateBooking as apiUpdateBooking } from '@
 import { getToken } from '@/lib/auth';
 import { FiPrinter, FiDownload, FiFilter, FiCalendar, FiEdit2, FiTrash2 } from "react-icons/fi";
 
+// Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
+// Accepts primary + optional fallback fields (deleted bookings/bookings may use 'details' or 'notes' instead of 'remarks')
+const cleanRemarks = (remarks?: string, details?: string, notes?: string): string => {
+  const raw = remarks || details || notes || '';
+  if (!raw) return '';
+  return raw.replace(/^Booked on[^\n]*\n?/i, '').trim();
+};
+
 type Booking = {
   id: number;
   name: string;
   details?: string;
+  notes?: string;
   occasion_type?: string;
   payment_mode?: string;
   advance_amount?: string;
@@ -116,7 +125,7 @@ export default function BookingsPage() {
       setEditPaymentMode(editingBooking.payment_mode as 'bank' | 'cash' | 'upi' || 'cash');
       setEditUtensil(editingBooking.utensil || '');
       setEditFinalPayment(editingBooking.final_payment || '');
-      setEditRemarks(editingBooking.remarks || '');
+      setEditRemarks(cleanRemarks(editingBooking.remarks, editingBooking.details, editingBooking.notes));
     }
   }, [editModalOpen, editingBooking]);
 
@@ -175,7 +184,9 @@ export default function BookingsPage() {
         b.customer_phone,
         String(b.id),
         b.occasion_type,
-        b.remarks
+        b.remarks,
+        b.details,
+        b.notes
       ];
       const matches = searchFields.some(f => (f || '').toLowerCase().includes(q));
       if (!matches) return false;
@@ -306,7 +317,7 @@ export default function BookingsPage() {
                   <td class="text-right">₹${(b.balance_amount || 0).toLocaleString()}</td>
                   <td>${b.utensil || '-'}</td>
                   <td class="text-right">${b.final_payment ? `₹${parseFloat(String(b.final_payment)).toLocaleString()}` : '-'}</td>
-                  <td>${b.remarks || '-'}</td>
+                  <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                 </tr>
               `).join('') || '<tr><td colspan="10" class="text-center">No bookings found</td></tr>'}
             </tbody>
@@ -354,7 +365,7 @@ export default function BookingsPage() {
       b.balance_amount || 0,
       b.utensil || "",
       parseFloat(String(b.final_payment)) || 0,
-      b.remarks || ""
+      cleanRemarks(b.remarks, b.details, b.notes) || ""
     ]);
     
     const csvContent = [
@@ -634,9 +645,9 @@ export default function BookingsPage() {
               </div>
             </div>
             
-            {b.remarks && (
+            {cleanRemarks(b.remarks, b.details, b.notes) && (
               <div className="text-sm text-gray-500 mb-3 truncate">
-                <span className="font-medium">Remarks:</span> {b.remarks}
+                <span className="font-medium">Remarks:</span> {cleanRemarks(b.remarks, b.details, b.notes)}
               </div>
             )}
             
@@ -725,8 +736,8 @@ export default function BookingsPage() {
                   <td className="py-3 px-4 text-right text-green-600 font-medium">
                     {booking.final_payment ? `₹${parseFloat(String(booking.final_payment)).toLocaleString()}` : '-'}
                   </td>
-                  <td className="py-3 px-4 text-gray-500 max-w-[150px] truncate" title={booking.remarks || ''}>
-                    {booking.remarks || '-'}
+                  <td className="py-3 px-4 text-gray-500 max-w-[150px] truncate" title={cleanRemarks(booking.remarks, booking.details, booking.notes)}>
+                    {cleanRemarks(booking.remarks, booking.details, booking.notes) || '-'}
                   </td>
                   <td className="py-3 px-4">
                     <div className="flex items-center justify-center gap-1">

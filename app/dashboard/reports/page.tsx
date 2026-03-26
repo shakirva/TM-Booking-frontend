@@ -7,6 +7,15 @@ import { deleteBooking } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
+// Strip backend-prepended "Booked on DD/MM/YYYY" prefix from remarks
+// Accepts primary + optional fallback fields (deleted bookings/bookings may use 'details' or 'notes' instead of 'remarks')
+const cleanRemarks = (remarks?: string, details?: string, notes?: string): string => {
+  const raw = remarks || details || notes || '';
+  if (!raw) return '';
+  return raw.replace(/^Booked on[^\n]*\n?/i, '').trim();
+};
+
 interface Booking {
   id: number;
   date: string;
@@ -21,6 +30,8 @@ interface Booking {
   utensil?: string;
   final_payment?: string | number;
   remarks?: string;
+  details?: string;
+  notes?: string;
   time?: string;
   created_at?: string;
 }
@@ -239,7 +250,7 @@ export default function ReportsPage() {
                   <td class="text-center">${b.night || 'No'}</td>
                   <td class="text-right">₹${(parseFloat(String(b.advance_amount)) || 0).toLocaleString()}</td>
                   <td class="text-right">₹${(b.balance_amount || 0).toLocaleString()}</td>
-                  <td>${b.remarks || '-'}</td>
+                  <td>${cleanRemarks(b.remarks, b.details, b.notes) || '-'}</td>
                 </tr>
               `).join('') || '<tr><td colspan="8" class="text-center">No bookings found</td></tr>'}
             </tbody>
@@ -283,7 +294,7 @@ export default function ReportsPage() {
       b.night || "No",
       parseFloat(String(b.advance_amount)) || 0,
       b.balance_amount || 0,
-      b.remarks || ""
+      cleanRemarks(b.remarks, b.details, b.notes) || ""
     ]);
 
     const csvContent = [
@@ -651,8 +662,8 @@ export default function ReportsPage() {
                     <td className="py-4 px-6 text-rose-600 font-bold whitespace-nowrap">
                       ₹{(booking.balance_amount || 0).toLocaleString()}
                     </td>
-                    <td className="py-4 px-6 text-gray-500 max-w-[150px] truncate italic" title={booking.remarks || ''}>
-                      {booking.remarks || '-'}
+                    <td className="py-4 px-6 text-gray-500 max-w-[150px] truncate italic" title={cleanRemarks(booking.remarks, booking.details, booking.notes)}>
+                      {cleanRemarks(booking.remarks, booking.details, booking.notes) || '-'}
                     </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center justify-center">
@@ -729,9 +740,9 @@ export default function ReportsPage() {
                     <p className="text-xs text-gray-600 flex items-center gap-1">
                       <span className="font-semibold">Phone:</span> {booking.phone || booking.customer_phone || '-'}
                     </p>
-                    {booking.remarks && (
+                    {cleanRemarks(booking.remarks, booking.details, booking.notes) && (
                       <p className="text-xs text-gray-500 italic truncate italic">
-                        &quot;{booking.remarks}&quot;
+                        &quot;{cleanRemarks(booking.remarks, booking.details, booking.notes)}&quot;
                       </p>
                     )}
                   </div>
